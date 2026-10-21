@@ -348,6 +348,13 @@ def _aggregate(max_games: int) -> dict:
 
     play_scores.sort(key=lambda r: r["ppi"], reverse=True)
 
+    # Keep a spread of plays across the whole pressure range for the mini-game:
+    # sample evenly through the sorted list so every level (calm..infernal) shows up.
+    spread = []
+    if play_scores:
+        step = max(1, len(play_scores) // 60)
+        spread = play_scores[::step][:60]
+
     return {
         "gamesAnalyzed": len(games),
         "playsScored": len(play_scores),
@@ -358,6 +365,7 @@ def _aggregate(max_games: int) -> dict:
         "teamsDefense": teams_def,
         "teamsOffense": teams_off,
         "topPlays": play_scores[:25],
+        "quizPlays": spread,
     }
 
 

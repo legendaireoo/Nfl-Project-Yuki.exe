@@ -147,8 +147,57 @@ select {
 .goplay:hover { text-decoration: underline; }
 .ppi-hero em { color: #ffd98a; font-style: normal; }
 
-.ppi-badge { font-size: 14px; margin-bottom: 8px; color: var(--muted); font-variant-numeric: tabular-nums; }
-.ppi-badge strong { font-size: 18px; }
+.ppi-badge { font-size: 15px; margin-bottom: 8px; color: var(--text); }
+.ppi-badge strong { font-size: 16px; }
+.pm-note { color: var(--muted); font-size: 12.5px; }
+
+/* Fun scale legend */
+.scale-legend { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 10px; }
+.scale-legend span { background: var(--panel-2); border: 1px solid var(--border); border-radius: 999px; padding: 4px 10px; font-size: 12px; color: var(--text); }
+
+/* Rusher cards (fun leaderboard) */
+.rusher-cards { display: grid; grid-template-columns: 1fr; gap: 10px; }
+.rusher-card { background: var(--panel-2); border: 1px solid var(--border); border-radius: 10px; padding: 12px 14px; }
+.rc-head { display: flex; align-items: center; gap: 8px; }
+.rc-rank { font-size: 18px; }
+.rc-name { font-weight: 700; }
+.rc-pos { color: var(--muted); font-size: 12px; background: var(--panel); border-radius: 6px; padding: 1px 6px; }
+.rc-nick { color: #ffd98a; font-weight: 700; font-size: 13.5px; margin: 6px 0 4px; }
+.rc-meter { height: 8px; background: var(--panel); border-radius: 999px; overflow: hidden; margin: 6px 0; }
+.rc-fill { height: 100%; background: linear-gradient(90deg, #ffbf47, #ff6b6b); border-radius: 999px; }
+.rc-stat { font-size: 13px; }
+.rc-why { font-size: 12.5px; color: var(--muted); margin-top: 4px; }
+
+/* Playful tabs */
+.game-tab.active { background: linear-gradient(135deg, #b78bff, #8a5cf0); border-color: #b78bff; color: #fff; }
+.game-tab { color: #d6c2ff; }
+
+/* Mini-game */
+.game-panel { text-align: center; }
+.game-panel h3, .game-panel .hint { text-align: left; }
+.game-score { font-size: 15px; font-weight: 700; margin-bottom: 12px; text-align: left; }
+.game-desc { margin: 12px 0; font-size: 14px; color: var(--text); }
+.game-choices { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; margin: 12px 0; min-height: 44px; }
+.choice-btn {
+  background: var(--panel-2); color: var(--text); border: 1px solid var(--border);
+  border-radius: 10px; padding: 12px 18px; font-size: 15px; cursor: pointer; transition: all 0.12s;
+}
+.choice-btn:hover:not(:disabled) { border-color: var(--accent); transform: translateY(-2px); }
+.choice-btn:disabled { cursor: default; opacity: 0.75; }
+.choice-btn.correct { background: #1f7a4d; border-color: #37d6a0; color: #fff; opacity: 1; }
+.choice-btn.wrong { background: #7a2b2b; border-color: #ff6b6b; color: #fff; opacity: 1; }
+.game-result { min-height: 24px; font-size: 14px; margin: 10px 0; padding: 10px; border-radius: 8px; }
+.game-result.good { background: rgba(55,214,160,0.12); border: 1px solid #37d6a0; }
+.game-result.ok { background: rgba(255,191,71,0.12); border: 1px solid #ffbf47; }
+.game-result.bad { background: rgba(255,107,107,0.12); border: 1px solid #ff6b6b; }
+.game-actions { margin-top: 12px; display: flex; gap: 10px; justify-content: center; }
+.game-actions button {
+  background: var(--accent); color: #fff; border: none; border-radius: 8px;
+  padding: 10px 20px; font-size: 14px; font-weight: 600; cursor: pointer;
+}
+.game-actions button:hover { filter: brightness(1.1); }
+.hidden { display: none; }
+#gameField { width: 100%; background: #1f6b35; border-radius: 10px; display: block; }
 
 /* Live pressure meter under the field */
 .pressure-meter { display: flex; align-items: center; gap: 12px; margin-top: 12px; }

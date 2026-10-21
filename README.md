@@ -57,6 +57,15 @@ python3 generate_report.py   # writes ppi_report.svg — a shareable infographic
 > Hendrickson — i.e. the league's genuinely elite rushers. Ghost-Pressure #1 is
 > Aaron Donald, whose disruption routinely doesn't show up as a sack.
 
+## 🎮 Fun & accessible (no maths degree required)
+
+The whole interface is built to be **playful, not academic**. Pressure is shown
+as a 0–100 "heat" scale with emojis (😎 Peinard → 🙂 Gérable → 😬 Chaud →
+🔥 Brûlant → 💀 Infernal), top rushers get **nicknames** (👹 Le Cauchemar,
+👻 Le Fantôme, 🌋 Le Volcan…), and there's a **mini-game — "Devine la pression"**:
+watch a real play animate, then guess how much heat the QB faced and score points.
+No formulas on screen — just football, in plain language.
+
 ## ✨ Why it's special
 
 **Zero dependencies.** No `pip install`, no `npm install`, no internet needed.
@@ -73,7 +82,8 @@ you can run it.
 | **Pass Rush** | Leaderboard of top disruptors — hits, hurries, sacks, total pressures & pressure rate |
 | **Pass Block** | Best protectors — lowest pressure-allowed rate (min. 50 snaps) |
 | **Teams** | Scatter of team pass-rush rate vs. pressure-allowed rate, with full table |
-| **⚡ PPI Metric** | The original stat: PPI leaderboards (generators + Ghost Pressure), most-pressuring defenses / best-protected offenses, and the highest-PPI plays (click to watch) |
+| **🔥 Pressure-mètre** | The original stat, playful edition: pressure leaderboards with nicknames, the Ghosts, team vibes, and the hottest plays (click to watch) |
+| **🎮 Devine la pression** | Mini-game: watch a real play, guess the pressure level, rack up points and streaks |
 | **Play Viewer** | Pick any game + play and **animate the tracking data** on a football field — players colored by offense/defense, ball, direction arrows, line of scrimmage, live event tags, and a **live PPI badge** |
 
 ## 🚀 Running it
@@ -152,6 +162,7 @@ Nfl-Project-Yuki.exe/
     ├── index.html   # single-page UI shell
     ├── style.css    # dark NFL-themed styling
     ├── charts.js    # canvas chart helpers (bar, donut, scatter)
+    ├── fun.js       # 🎮 "fun layer": emojis, nicknames, plain-language labels
     ├── field.js     # football-field renderer + play animation
     └── app.js       # frontend controller / API wiring
 ```

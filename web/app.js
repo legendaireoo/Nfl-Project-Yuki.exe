@@ -30,6 +30,7 @@
     else if (view === "block") loadBlock();
     else if (view === "teams") loadTeams();
     else if (view === "ppi") loadPPI();
+    else if (view === "game") loadGame();
     else if (view === "viewer") loadViewer();
   }
 
@@ -58,14 +59,14 @@
   }
   function drawOverview(d) {
     const cards = [
-      { label: "Games", value: d.games },
-      { label: "Players", value: d.players },
-      { label: "Plays", value: d.plays.toLocaleString() },
-      { label: "Completion %", value: d.completionPct + "%", cls: "accent" },
-      { label: "Avg Yards / Play", value: d.avgYards, cls: "accent" },
-      { label: "Play-Action %", value: d.playActionPct + "%", cls: "warn" },
-      { label: "Total Pressures", value: d.totalPressures.toLocaleString(), cls: "danger" },
-      { label: "Sacks", value: d.sacks, cls: "danger" },
+      { label: "🏟️ Matchs", value: d.games },
+      { label: "🧑 Joueurs", value: d.players },
+      { label: "🎯 Actions", value: d.plays.toLocaleString() },
+      { label: "✅ Passes réussies", value: d.completionPct + "%", cls: "accent" },
+      { label: "📏 Yards / action", value: d.avgYards, cls: "accent" },
+      { label: "🎭 Feintes de course", value: d.playActionPct + "%", cls: "warn" },
+      { label: "💥 Pressions subies", value: d.totalPressures.toLocaleString(), cls: "danger" },
+      { label: "🛑 Sacks (QB au sol)", value: d.sacks, cls: "danger" },
     ];
     document.getElementById("statCards").innerHTML = cards
       .map((c) => `<div class="card ${c.cls || ""}"><div class="value">${c.value}</div><div class="label">${c.label}</div></div>`)
@@ -113,7 +114,7 @@
       )
       .join("");
     document.getElementById("coverageTable").innerHTML =
-      `<thead><tr><th>Coverage</th><th class="num">Plays</th><th class="num">Comp %</th><th class="num">Avg Yds</th></tr></thead><tbody>${rows}</tbody>`;
+      `<thead><tr><th>Couverture</th><th class="num">Actions</th><th class="num">✅ Passes réussies</th><th class="num">📏 Yards moy.</th></tr></thead><tbody>${rows}</tbody>`;
   }
 
   // ---- PASS RUSH --------------------------------------------------------
@@ -136,7 +137,7 @@
         )
         .join("");
       document.getElementById("rushTable").innerHTML =
-        `<thead><tr><th>#</th><th>Player</th><th>Pos</th><th class="num">Snaps</th><th class="num">Sacks</th><th class="num">Hits</th><th class="num">Hurries</th><th class="num">Pressures</th><th class="num">Rate</th></tr></thead><tbody>${rows}</tbody>`;
+        `<thead><tr><th>#</th><th>Joueur</th><th>Poste</th><th class="num">Actions</th><th class="num">🛑 Sacks</th><th class="num">💢 Coups</th><th class="num">😰 Bousculades</th><th class="num">💥 Pressions</th><th class="num">Taux</th></tr></thead><tbody>${rows}</tbody>`;
     });
   }
 
@@ -159,7 +160,7 @@
         )
         .join("");
       document.getElementById("blockTable").innerHTML =
-        `<thead><tr><th>#</th><th>Player</th><th>Pos</th><th class="num">Snaps</th><th class="num">Sacks All.</th><th class="num">Hits All.</th><th class="num">Hurries All.</th><th class="num">Pressures All.</th><th class="num">Rate</th></tr></thead><tbody>${rows}</tbody>`;
+        `<thead><tr><th>#</th><th>Joueur</th><th>Poste</th><th class="num">Actions</th><th class="num">🛑 Sacks concédés</th><th class="num">💢 Coups concédés</th><th class="num">😰 Bouscul. concédées</th><th class="num">💥 Pressions concédées</th><th class="num">Taux</th></tr></thead><tbody>${rows}</tbody>`;
     });
   }
 
@@ -174,7 +175,7 @@
     C.scatter(
       document.getElementById("teamScatter"),
       d.map((r) => ({ x: r.pressureAllowedRate, y: r.pressureRate, label: r.team })),
-      { xLabel: "Pressure rate allowed (offense) %", yLabel: "Pressure rate generated (defense) %" }
+      { xLabel: "Pression subie par l'attaque (%)", yLabel: "Pression mise par la défense (%)" }
     );
     const rows = d
       .map(
@@ -190,7 +191,7 @@
       )
       .join("");
     document.getElementById("teamTable").innerHTML =
-      `<thead><tr><th>Team</th><th class="num">Rush Snaps</th><th class="num">Pressures</th><th class="num">Pass-Rush Rate</th><th class="num">Block Snaps</th><th class="num">Pressures All.</th><th class="num">Pressure-All. Rate</th></tr></thead><tbody>${rows}</tbody>`;
+      `<thead><tr><th>Équipe</th><th class="num">Actions rush</th><th class="num">💥 Pressions mises</th><th class="num">Taux rush</th><th class="num">Actions bloc</th><th class="num">Pressions concédées</th><th class="num">Taux concédé</th></tr></thead><tbody>${rows}</tbody>`;
   }
 
   // ---- PPI (original metric) -------------------------------------------
@@ -201,39 +202,59 @@
   }
   function fetchPPI(games) {
     const status = document.getElementById("ppiStatus");
-    status.textContent = `Computing PPI across ${games} game(s) from raw tracking…`;
+    status.textContent = `🔄 Calcul de la pression sur ${games} match(s)…`;
     api(`/api/ppi?games=${games}`).then((d) => {
       cache.ppi = d;
-      status.textContent = `✓ ${d.playsScored.toLocaleString()} dropbacks scored across ${d.gamesAnalyzed} games · league avg PPI ${d.avgPPI}`;
+      status.textContent = `✓ ${d.playsScored.toLocaleString()} actions analysées sur ${d.gamesAnalyzed} matchs · pression moyenne ${d.avgPPI}/100`;
       drawPPI(d);
     });
   }
   function drawPPI(d) {
+    const F = window.YukiFun;
+    const avgLvl = F.pressureLevel(d.avgPPI);
+    const king = d.rushers[0] || {};
     const cards = [
-      { label: "Games Analyzed", value: d.gamesAnalyzed },
-      { label: "Dropbacks Scored", value: d.playsScored.toLocaleString() },
-      { label: "League Avg PPI", value: d.avgPPI, cls: "accent" },
-      { label: "Top PPI Rusher", value: (d.rushers[0] || {}).name || "—", cls: "warn" },
+      { label: "🏟️ Matchs analysés", value: d.gamesAnalyzed },
+      { label: "🎯 Actions passées au crible", value: d.playsScored.toLocaleString() },
+      { label: `${avgLvl.emoji} Pression moyenne`, value: d.avgPPI + "/100", cls: "accent" },
+      { label: "👑 Roi de la pression", value: king.name || "—", cls: "warn" },
     ];
     document.getElementById("ppiCards").innerHTML = cards
       .map((c) => `<div class="card ${c.cls || ""}"><div class="value" style="font-size:${String(c.value).length > 10 ? 18 : 26}px">${c.value}</div><div class="label">${c.label}</div></div>`)
       .join("");
 
+    // league average pressure-per-play for the fun comparison line
+    const leagueAvgPerPlay =
+      d.rushers.reduce((s, r) => s + (r.ppiPerPlay || 0), 0) / (d.rushers.length || 1);
+
+    // Rusher cards with nicknames instead of a dry table.
     const maxPPI = Math.max(...d.rushers.map((r) => r.totalPPI), 1);
-    document.getElementById("ppiRushTable").innerHTML =
-      `<thead><tr><th>#</th><th>Player</th><th>Pos</th><th class="num">Plays</th><th class="num">Total PPI</th><th class="num">PPI/Play</th></tr></thead><tbody>` +
-      d.rushers.slice(0, 25).map((r, i) => `<tr>
-        <td class="rank">${i + 1}</td><td>${r.name}</td><td>${r.position}</td>
-        <td class="num">${r.plays}</td>
-        <td class="num bar-cell"><div class="bar" style="width:${(r.totalPPI / maxPPI) * 100}%"></div><span>${r.totalPPI}</span></td>
-        <td class="num">${r.ppiPerPlay}</td></tr>`).join("") +
-      `</tbody>`;
+    document.getElementById("ppiRushCards").innerHTML = d.rushers
+      .slice(0, 12)
+      .map((r, i) => {
+        const nick = F.rusherNickname(r);
+        const cmp = F.rusherCompare(r, leagueAvgPerPlay);
+        const w = (r.totalPPI / maxPPI) * 100;
+        const medal = i === 0 ? "🥇" : i === 1 ? "🥈" : i === 2 ? "🥉" : `#${i + 1}`;
+        return `<div class="rusher-card">
+          <div class="rc-head">
+            <span class="rc-rank">${medal}</span>
+            <span class="rc-name">${r.name}</span>
+            <span class="rc-pos">${r.position}</span>
+          </div>
+          <div class="rc-nick">${nick.tag}</div>
+          <div class="rc-meter"><div class="rc-fill" style="width:${w}%"></div></div>
+          <div class="rc-stat">🔥 Pression totale : <strong>${r.totalPPI}</strong> · ${r.plays} actions</div>
+          <div class="rc-why">${nick.why} ${cmp}</div>
+        </div>`;
+      })
+      .join("");
 
     document.getElementById("ppiGhostTable").innerHTML =
-      `<thead><tr><th>#</th><th>Player</th><th>Pos</th><th class="num">Ghost PPI</th><th class="num">Unrewarded Plays</th></tr></thead><tbody>` +
+      `<thead><tr><th>#</th><th>Joueur</th><th>Poste</th><th class="num">👻 Pression fantôme</th><th class="num">Actions oubliées</th></tr></thead><tbody>` +
       d.ghostLeaders.slice(0, 15).map((r, i) => `<tr>
         <td class="rank">${i + 1}</td><td>${r.name}</td><td>${r.position}</td>
-        <td class="num">${r.ghostPPI}</td><td class="num">${r.ghostPlays}</td></tr>`).join("") +
+        <td class="num"><strong>${r.ghostPPI}</strong></td><td class="num">${r.ghostPlays}</td></tr>`).join("") +
       `</tbody>`;
 
     C.bar(document.getElementById("ppiDefChart"),
@@ -244,11 +265,16 @@
       { horizontal: true, color: C.PALETTE[1] });
 
     document.getElementById("ppiPlaysTable").innerHTML =
-      `<thead><tr><th>#</th><th class="num">PPI</th><th class="num">Time to Throw</th><th>Defense</th><th>Offense</th><th></th></tr></thead><tbody>` +
-      d.topPlays.slice(0, 15).map((p, i) => `<tr>
-        <td class="rank">${i + 1}</td><td class="num"><strong>${p.ppi}</strong></td>
+      `<thead><tr><th>#</th><th>Niveau</th><th class="num">Note</th><th class="num">Lancer en</th><th>Défense</th><th>Attaque</th><th></th></tr></thead><tbody>` +
+      d.topPlays.slice(0, 15).map((p, i) => {
+        const lvl = F.pressureLevel(p.ppi);
+        return `<tr>
+        <td class="rank">${i + 1}</td>
+        <td><span style="color:${lvl.color};font-weight:700">${lvl.emoji} ${lvl.label}</span></td>
+        <td class="num"><strong>${p.ppi}</strong></td>
         <td class="num">${p.timeToThrow}s</td><td>${p.def}</td><td>${p.off}</td>
-        <td><a href="#" class="goplay" data-game="${p.gameId}" data-play="${p.playId}">▶ watch</a></td></tr>`).join("") +
+        <td><a href="#" class="goplay" data-game="${p.gameId}" data-play="${p.playId}">🍿 regarder</a></td></tr>`;
+      }).join("") +
       `</tbody>`;
 
     document.querySelectorAll(".goplay").forEach((a) => {
@@ -284,7 +310,7 @@
     viewer = YukiField.makeViewer(fieldCanvas, {
       onFrame: (i, total, event, gauge) => {
         slider.value = i;
-        frameLabel.textContent = `frame ${i + 1} / ${total}`;
+        frameLabel.textContent = `image ${i + 1} / ${total}`;
         eventLabel.textContent = event ? "● " + event : "";
         if (gauge != null) {
           const g = Math.round(gauge);
@@ -294,7 +320,7 @@
           pmVal.textContent = g;
         }
       },
-      onEnd: () => { playBtn.textContent = "▶ Play"; },
+      onEnd: () => { playBtn.textContent = "▶ Jouer"; },
     });
 
     api("/api/games").then((games) => {
@@ -322,18 +348,20 @@
     });
     document.getElementById("resetBtn").addEventListener("click", () => {
       viewer.reset();
-      playBtn.textContent = "▶ Play";
+      playBtn.textContent = "▶ Jouer";
     });
     slider.addEventListener("input", () => {
       viewer.stop();
-      playBtn.textContent = "▶ Play";
+      playBtn.textContent = "▶ Jouer";
       viewer.setFrame(parseInt(slider.value, 10));
     });
   }
 
+  const RES_FR = { C: "✅ passe réussie", I: "❌ passe ratée", S: "🛑 sack (QB au sol)", R: "🏃 le QB s'enfuit", IN: "🙈 interception" };
+
   function loadPlays(gameId, targetPlayId) {
     const pSel = document.getElementById("playSelect");
-    pSel.innerHTML = `<option>Loading…</option>`;
+    pSel.innerHTML = `<option>Chargement…</option>`;
     api(`/api/plays?gameId=${gameId}`).then((plays) => {
       pSel.innerHTML = plays
         .map((p) => {
@@ -350,14 +378,14 @@
   }
 
   function loadPlay(gameId, playId) {
-    document.getElementById("playDesc").textContent = "Loading play…";
-    // fetch PPI for this play in parallel and show it as a badge
+    document.getElementById("playDesc").textContent = "Chargement de l'action… 🍿";
+    // fetch PPI for this play in parallel and show it as a fun story badge
     api(`/api/ppi-play?gameId=${gameId}&playId=${playId}`).then((ppi) => {
       const el = document.getElementById("ppiBadge");
       if (el) {
         if (ppi && ppi.ppi != null) {
-          const color = ppi.ppi >= 60 ? "#ff6b6b" : ppi.ppi >= 40 ? "#ffbf47" : "#37d6a0";
-          el.innerHTML = `⚡ PPI <strong style="color:${color}">${ppi.ppi}</strong> · throw in ${ppi.timeToThrow}s`;
+          el.innerHTML = window.YukiFun.playStory(ppi.ppi, ppi.timeToThrow) +
+            ` <span class="pm-note">(note ${ppi.ppi}/100)</span>`;
         } else {
           el.textContent = "";
         }
@@ -366,14 +394,119 @@
     api(`/api/play?gameId=${gameId}&playId=${playId}`).then((play) => {
       const m = play.meta || {};
       document.getElementById("playDesc").innerHTML =
-        `<strong>${m.possessionTeam} vs ${m.defensiveTeam}</strong> · Q${m.quarter} · ${m.down} &amp; ${m.yardsToGo} · ` +
-        `Coverage: <strong>${m.coverage || "?"}</strong> · Result: <strong>${m.passResult || "?"}</strong><br>${m.description || ""}`;
+        `<strong>${m.possessionTeam} ⚔️ ${m.defensiveTeam}</strong> · Q${m.quarter} · ${m.down} &amp; ${m.yardsToGo} · ` +
+        `Couverture : <strong>${m.coverage || "?"}</strong> · Résultat : <strong>${RES_FR[m.passResult] || m.passResult || "?"}</strong><br>${m.description || ""}`;
       const slider = document.getElementById("frameSlider");
       slider.max = Math.max(0, play.frameCount - 1);
       slider.value = 0;
       viewer.load(play);
-      document.getElementById("playBtn").textContent = "▶ Play";
+      document.getElementById("playBtn").textContent = "▶ Jouer";
     });
+  }
+
+  // ---- MINI-JEU : Devine la pression -----------------------------------
+  function loadGame() {
+    const startBtn = document.getElementById("gameStart");
+    const nextBtn = document.getElementById("gameNext");
+    const choicesEl = document.getElementById("gameChoices");
+    const resultEl = document.getElementById("gameResult");
+    const descEl = document.getElementById("gameDesc");
+    const scoreEl = document.getElementById("gameScore");
+    const F = window.YukiFun;
+
+    const gameViewer = YukiField.makeViewer(document.getElementById("gameField"), {});
+    let topPlays = [];
+    let pool = [];
+    let current = null;
+    let score = 0, total = 0, streak = 0;
+
+    const LEVELS = [
+      { label: "😎 Peinard", min: 0, max: 20 },
+      { label: "🙂 Gérable", min: 20, max: 40 },
+      { label: "😬 Chaud", min: 40, max: 60 },
+      { label: "🔥 Brûlant", min: 60, max: 80 },
+      { label: "💀 Infernal", min: 80, max: 101 },
+    ];
+    function levelIndex(ppi) {
+      for (let i = 0; i < LEVELS.length; i++) if (ppi >= LEVELS[i].min && ppi < LEVELS[i].max) return i;
+      return LEVELS.length - 1;
+    }
+
+    function updateScore() {
+      scoreEl.textContent = `Score : ${score} / ${total} · Série : ${streak} 🔥`;
+    }
+
+    function pickPlay() {
+      if (!pool.length) pool = topPlays.slice();
+      const idx = Math.floor(Math.random() * pool.length);
+      return pool.splice(idx, 1)[0];
+    }
+
+    function newRound() {
+      resultEl.innerHTML = "";
+      nextBtn.classList.add("hidden");
+      choicesEl.innerHTML = "⏳ Chargement de l'action…";
+      current = pickPlay();
+      api(`/api/play?gameId=${current.gameId}&playId=${current.playId}`).then((play) => {
+        descEl.innerHTML = `<strong>${(play.meta || {}).possessionTeam} ⚔️ ${(play.meta || {}).defensiveTeam}</strong> — regarde bien… puis devine !`;
+        gameViewer.load(play);
+        gameViewer.reset();
+        gameViewer.play();
+        // show the answer buttons
+        choicesEl.innerHTML = LEVELS.map(
+          (l, i) => `<button class="choice-btn" data-i="${i}">${l.label}</button>`
+        ).join("");
+        choicesEl.querySelectorAll(".choice-btn").forEach((b) =>
+          b.addEventListener("click", () => answer(parseInt(b.dataset.i, 10)))
+        );
+      });
+    }
+
+    function answer(guessIdx) {
+      const truth = levelIndex(current.ppi);
+      total++;
+      const diff = Math.abs(guessIdx - truth);
+      let msg, cls;
+      if (diff === 0) {
+        score += 2; streak++;
+        msg = `🎉 Parfait ! C'était bien <strong>${LEVELS[truth].label}</strong> (${current.ppi}/100). +2 points !`;
+        cls = "good";
+      } else if (diff === 1) {
+        score += 1; streak = 0;
+        msg = `👍 Presque ! La vraie réponse : <strong>${LEVELS[truth].label}</strong> (${current.ppi}/100). +1 point.`;
+        cls = "ok";
+      } else {
+        streak = 0;
+        msg = `😅 Raté ! C'était <strong>${LEVELS[truth].label}</strong> (${current.ppi}/100).`;
+        cls = "bad";
+      }
+      updateScore();
+      resultEl.className = "game-result " + cls;
+      resultEl.innerHTML = msg + "<br>" + F.playStory(current.ppi, current.timeToThrow);
+      choicesEl.querySelectorAll(".choice-btn").forEach((b) => {
+        const i = parseInt(b.dataset.i, 10);
+        b.disabled = true;
+        if (i === truth) b.classList.add("correct");
+        else if (i === guessIdx) b.classList.add("wrong");
+      });
+      nextBtn.classList.remove("hidden");
+    }
+
+    function begin() {
+      startBtn.textContent = "🎲 Nouvelle partie";
+      if (topPlays.length) { newRound(); return; }
+      choicesEl.innerHTML = "⏳ Préparation du jeu…";
+      api("/api/ppi?games=20").then((d) => {
+        // use a spread of plays across all pressure levels for variety
+        topPlays = (d.quizPlays && d.quizPlays.length ? d.quizPlays : d.topPlays || []).concat();
+        if (topPlays.length < 8) { choicesEl.innerHTML = "Pas assez de données."; return; }
+        newRound();
+      });
+    }
+
+    startBtn.addEventListener("click", begin);
+    nextBtn.addEventListener("click", newRound);
+    updateScore();
   }
 
   // initial view
