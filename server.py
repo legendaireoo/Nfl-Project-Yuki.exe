@@ -19,6 +19,7 @@ from urllib.parse import parse_qs, urlparse
 import analytics
 import config
 import metrics
+import pocket
 import prow_data
 
 STATIC_TYPES = {
@@ -122,6 +123,21 @@ class Handler(BaseHTTPRequestHandler):
                 return
             res = metrics.play_ppi(game_id, play_id)
             self._send_json(res if res else {"error": "not a dropback / no PPI"})
+        elif path == "/api/pocket":
+            n = qs.get("games", ["20"])[0]
+            try:
+                n = max(1, min(122, int(n)))
+            except ValueError:
+                n = 20
+            self._send_json(pocket.summary(n))
+        elif path == "/api/pocket-play":
+            game_id = qs.get("gameId", [None])[0]
+            play_id = qs.get("playId", [None])[0]
+            if not game_id or not play_id:
+                self._send_json({"error": "gameId and playId required"}, 400)
+                return
+            res = pocket.play_lane(game_id, play_id)
+            self._send_json(res if res else {"error": "not a dropback"})
         elif path == "/api/prow":
             self._send_json(prow_data.summary())
         elif path == "/api/prow-buckets":

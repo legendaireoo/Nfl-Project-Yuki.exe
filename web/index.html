@@ -12,7 +12,7 @@
       <span class="logo">🏈</span>
       <div>
         <h1>Yuki<span class="ext">.exe</span></h1>
-        <p class="tagline">🏈 Qui met le feu au quarterback ? Le labo NFL fun.</p>
+        <p class="tagline">🏈 Who sets the quarterback on fire? The fun NFL lab.</p>
       </div>
     </div>
     <nav class="tabs" id="tabs">
@@ -21,9 +21,10 @@
       <button class="tab" data-view="rush">Pass Rush</button>
       <button class="tab" data-view="block">Pass Block</button>
       <button class="tab" data-view="teams">Teams</button>
-      <button class="tab ppi-tab" data-view="ppi">🔥 Pressure-mètre</button>
-      <button class="tab prow-tab" data-view="prow">🎯 Fenêtre de tir</button>
-      <button class="tab game-tab" data-view="game">🎮 Devine la pression</button>
+      <button class="tab ppi-tab" data-view="ppi">🔥 Pressure Meter</button>
+      <button class="tab prow-tab" data-view="prow">🎯 Throwing Window</button>
+      <button class="tab game-tab" data-view="game">🎮 Guess the Pressure</button>
+      <button class="tab pw-tab" data-view="pocket">🛡️ Pocket Watch</button>
       <button class="tab" data-view="viewer">🎬 Play Viewer</button>
     </nav>
   </header>
@@ -34,16 +35,16 @@
       <div class="cards" id="statCards"></div>
       <div class="grid-2">
         <div class="panel">
-          <h3>🛡️ Quelles couvertures la défense utilise</h3>
+          <h3>🛡️ Which coverages the defense uses</h3>
           <canvas class="chart" id="covChart" height="260"></canvas>
         </div>
         <div class="panel">
-          <h3>🎯 Comment finissent les passes</h3>
+          <h3>🎯 How the passes end up</h3>
           <canvas class="chart" id="resChart" height="260"></canvas>
         </div>
       </div>
       <div class="panel">
-        <h3>📐 Les formations préférées des attaques</h3>
+        <h3>📐 The offenses' favorite formations</h3>
         <canvas class="chart" id="formChart" height="220"></canvas>
       </div>
     </section>
@@ -51,8 +52,8 @@
     <!-- COVERAGE -->
     <section class="view" id="view-coverage">
       <div class="panel">
-        <h3>🛡️ Les couvertures de la défense</h3>
-        <p class="hint">Pour chaque schéma défensif : combien de passes réussissent contre, et combien de yards ça coûte.</p>
+        <h3>🛡️ The defense's coverages</h3>
+        <p class="hint">For each defensive scheme: how many passes get completed against it, and how many yards it gives up.</p>
         <canvas class="chart" id="coverageBar" height="300"></canvas>
         <div class="table-wrap"><table id="coverageTable"></table></div>
       </div>
@@ -61,8 +62,8 @@
     <!-- PASS RUSH -->
     <section class="view" id="view-rush">
       <div class="panel">
-        <h3>😤 Les meilleurs chasseurs de QB</h3>
-        <p class="hint">Ceux qui mettent le plus de pression (coups + bousculades + sacks). Mini 20 actions. <span class="tip">💡 clique sur une colonne pour trier !</span></p>
+        <h3>😤 The best QB hunters</h3>
+        <p class="hint">Those who bring the most pressure (hits + hurries + sacks). Min. 20 plays. <span class="tip">💡 click a column to sort!</span></p>
         <div class="table-wrap"><table id="rushTable"></table></div>
       </div>
     </section>
@@ -70,8 +71,8 @@
     <!-- PASS BLOCK -->
     <section class="view" id="view-block">
       <div class="panel">
-        <h3>🧱 Les meilleurs gardes du corps</h3>
-        <p class="hint">Les bloqueurs qui laissent passer le moins de pression. Mini 50 actions. <span class="tip">💡 clique sur une colonne pour trier !</span></p>
+        <h3>🧱 The best bodyguards</h3>
+        <p class="hint">The blockers who allow the least pressure. Min. 50 plays. <span class="tip">💡 click a column to sort!</span></p>
         <div class="table-wrap"><table id="blockTable"></table></div>
       </div>
     </section>
@@ -79,34 +80,34 @@
     <!-- TEAMS -->
     <section class="view" id="view-teams">
       <div class="panel">
-        <h3>⚔️ Attaque vs Défense : qui domine ?</h3>
-        <p class="hint">Chaque point = une équipe. Vers le haut = défense qui chasse fort. Vers la droite = attaque qui souffre.</p>
+        <h3>⚔️ Offense vs Defense: who wins?</h3>
+        <p class="hint">Each dot = a team. Higher = defense that hunts hard. Further right = offense that suffers.</p>
         <canvas class="chart" id="teamScatter" height="420"></canvas>
         <div class="table-wrap"><table id="teamTable"></table></div>
       </div>
     </section>
 
-    <!-- PRESSURE-MÈTRE (PPI, version fun) -->
+    <!-- PRESSURE METER (PPI) -->
     <section class="view" id="view-ppi">
       <div class="panel ppi-hero">
-        <h3>🔥 Le Pressure-mètre <span class="badge">note maison</span></h3>
+        <h3>🔥 The Pressure Meter <span class="badge">custom score</span></h3>
         <p class="hint">
-          Tout le monde dit "le QB était sous pression"… mais <strong>à quel point</strong> ?
-          Le Pressure-mètre donne une <strong>note de 0 à 100</strong> : plus les défenseurs
-          arrivent <strong>près et vite</strong> sur le quarterback avant qu'il lance, plus ça chauffe. 🌡️
+          Everyone says "the QB was under pressure"… but <strong>how much</strong>?
+          The Pressure Meter gives a <strong>0 to 100 score</strong>: the closer and faster the
+          defenders get to the quarterback before he throws, the hotter it gets. 🌡️
           <br>
           <span class="scale-legend">
-            <span>😎 0-20 Peinard</span><span>🙂 20-40 Gérable</span><span>😬 40-60 Chaud</span>
-            <span>🔥 60-80 Brûlant</span><span>💀 80-100 Infernal</span>
+            <span>😎 0-20 Chilling</span><span>🙂 20-40 Manageable</span><span>😬 40-60 Hot</span>
+            <span>🔥 60-80 Blazing</span><span>💀 80-100 Inferno</span>
           </span>
         </p>
         <div class="ppi-controls">
-          <label>Matchs analysés
+          <label>Games analyzed
             <select id="ppiGames">
-              <option value="10">10 matchs (rapide)</option>
-              <option value="20" selected>20 matchs</option>
-              <option value="40">40 matchs</option>
-              <option value="122">Les 122 (lent)</option>
+              <option value="10">10 games (fast)</option>
+              <option value="20" selected>20 games</option>
+              <option value="40">40 games</option>
+              <option value="122">All 122 (slow)</option>
             </select>
           </label>
           <span class="loading" id="ppiStatus"></span>
@@ -116,52 +117,52 @@
 
       <div class="grid-2">
         <div class="panel">
-          <h3>🏆 Les rois de la pression</h3>
-          <p class="hint">Les défenseurs qui mettent le plus le feu au QB — avec leur surnom maison.</p>
+          <h3>🏆 The kings of pressure</h3>
+          <p class="hint">The defenders who bring the most heat on the QB — with their custom nickname.</p>
           <div id="ppiRushCards" class="rusher-cards"></div>
         </div>
         <div class="panel">
-          <h3>👻 Les Fantômes</h3>
-          <p class="hint">Ils écrasent la pocket… mais la feuille de stats les <em>oublie</em>. Les héros de l'ombre.</p>
+          <h3>👻 The Ghosts</h3>
+          <p class="hint">They crush the pocket… but the stat sheet <em>forgets</em> them. The unsung heroes.</p>
           <div class="table-wrap"><table id="ppiGhostTable"></table></div>
         </div>
       </div>
 
       <div class="grid-2">
         <div class="panel">
-          <h3>🦈 Les défenses qui font le plus mal</h3>
+          <h3>🦈 The defenses that hurt the most</h3>
           <canvas class="chart" id="ppiDefChart" height="300"></canvas>
         </div>
         <div class="panel">
-          <h3>🧱 Les attaques les mieux protégées</h3>
+          <h3>🧱 The best-protected offenses</h3>
           <canvas class="chart" id="ppiOffChart" height="300"></canvas>
         </div>
       </div>
 
       <div class="panel">
-        <h3>💥 Le Top des actions les plus chaudes</h3>
-        <p class="hint">Clique sur "regarder" pour revivre l'action au ralenti. 🍿</p>
+        <h3>💥 The hottest plays leaderboard</h3>
+        <p class="hint">Click "watch" to relive the play in slow motion. 🍿</p>
         <div class="table-wrap"><table id="ppiPlaysTable"></table></div>
       </div>
     </section>
 
-    <!-- FENÊTRE DE TIR (PROW) -->
+    <!-- THROWING WINDOW (PROW) -->
     <section class="view" id="view-prow">
       <div class="panel ppi-hero">
-        <h3>🎯 La fenêtre de tir <span class="badge">receveurs</span></h3>
+        <h3>🎯 The Throwing Window <span class="badge">receivers</span></h3>
         <p class="hint">
-          "Il était grand ouvert, pourquoi le QB ne l'a pas vu ?!" 🗣️ On a mesuré, sur
-          <strong>7 221 passes</strong>, <strong>combien de temps</strong> le receveur visé était
-          déjà démarqué au moment du lancer. Surprise : être ouvert <em>au bon moment</em> compte
-          énormément… mais être ouvert <em>depuis longtemps</em> ne change presque rien ! 🤯
+          "He was wide open, why didn't the QB see him?!" 🗣️ We measured, across
+          <strong>7,221 throws</strong>, <strong>how long</strong> the targeted receiver had already
+          been open when the ball was released. Surprise: being open <em>at the right moment</em> matters
+          a ton… but being open <em>for a long time</em> barely changes a thing! 🤯
         </p>
         <div class="ppi-controls">
-          <label>Seuil "démarqué" (distance au défenseur le + proche)
+          <label>"Open" threshold (distance to nearest defender)
             <select id="prowK">
-              <option value="2">≥ 2 yards (serré)</option>
+              <option value="2">≥ 2 yards (tight)</option>
               <option value="3" selected>≥ 3 yards</option>
               <option value="4">≥ 4 yards</option>
-              <option value="5">≥ 5 yards (grand large)</option>
+              <option value="5">≥ 5 yards (wide open)</option>
             </select>
           </label>
           <span class="loading" id="prowStatus"></span>
@@ -170,31 +171,31 @@
       </div>
 
       <div class="panel">
-        <h3>📊 Réussite selon la durée d'ouverture</h3>
+        <h3>📊 Completion by how long the window was open</h3>
         <p class="hint" id="prowChartHint"></p>
         <canvas class="chart" id="prowChart" height="300"></canvas>
       </div>
 
       <div class="grid-2">
         <div class="panel">
-          <h3>🙈 Les QB qui ratent le plus de fenêtres</h3>
-          <p class="hint">% de passes vers un receveur couvert alors qu'un coéquipier était ouvert ≥ 1s. <em>Descriptif, pas une note</em> (le coéquipier peut être hors champ de vision).</p>
+          <h3>🙈 The QBs who miss the most windows</h3>
+          <p class="hint">% of throws to a covered receiver while a teammate had been open ≥ 1s. <em>Descriptive, not a grade</em> (the teammate may be out of the QB's sight line).</p>
           <div class="table-wrap"><table id="prowQbTable"></table></div>
         </div>
         <div class="panel">
-          <h3>🎬 Fenêtres ratées en vidéo</h3>
-          <p class="hint">Des cas flagrants : cible couverte, pote grand ouvert longtemps. Clique pour revivre l'action !</p>
+          <h3>🎬 Missed windows on video</h3>
+          <p class="hint">Blatant cases: covered target, teammate wide open for a long time. Click to relive the play!</p>
           <div class="table-wrap"><table id="prowExTable"></table></div>
         </div>
       </div>
     </section>
 
-    <!-- MINI-JEU : Devine la pression -->
+    <!-- MINI-GAME: Guess the Pressure -->
     <section class="view" id="view-game">
       <div class="panel game-panel">
-        <h3>🎮 Devine la pression !</h3>
-        <p class="hint">On te montre une vraie action. À toi de deviner : le QB était-il peinard ou en enfer ? 🔥</p>
-        <div class="game-score" id="gameScore">Score : 0 / 0 · Série : 0 🔥</div>
+        <h3>🎮 Guess the Pressure!</h3>
+        <p class="hint">We show you a real play. Your call: was the QB chilling or in hell? 🔥</p>
+        <div class="game-score" id="gameScore">Score: 0 / 0 · Streak: 0 🔥</div>
         <div class="field-wrap">
           <canvas id="gameField" width="1000" height="470"></canvas>
         </div>
@@ -202,8 +203,32 @@
         <div class="game-choices" id="gameChoices"></div>
         <div class="game-result" id="gameResult"></div>
         <div class="game-actions">
-          <button id="gameNext" class="hidden">▶ Action suivante</button>
-          <button id="gameStart">🎲 Lancer une action</button>
+          <button id="gameNext" class="hidden">▶ Next play</button>
+          <button id="gameStart">🎲 Deal a play</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- POCKET WATCH: will the pocket break? -->
+    <section class="view" id="view-pocket">
+      <div class="panel game-panel pw-panel">
+        <h3>🛡️ Pocket Watch — will the pocket break? <span class="badge">Open Lane</span></h3>
+        <p class="hint">
+          A pass rusher has an <strong>Open Lane</strong> when he is within 5 yards of the QB and no
+          blocker stands within 1 yard of the straight line between them. We show you the
+          <strong>first moment</strong> of a real play — then you guess: <strong>will the pocket hold?</strong>
+          If it breaks, <strong>which side</strong> gives way, and <strong>which rusher</strong> breaks through? 🔮
+        </p>
+        <div class="game-score" id="pwScore">Score: 0 / 0 · Streak: 0 🔥</div>
+        <div class="field-wrap">
+          <canvas id="pwField" width="1000" height="470"></canvas>
+        </div>
+        <div class="game-desc" id="pwDesc"></div>
+        <div class="game-choices" id="pwChoices"></div>
+        <div class="game-result" id="pwResult"></div>
+        <div class="game-actions">
+          <button id="pwNext" class="hidden">▶ Next play</button>
+          <button id="pwStart">🎲 Deal a play</button>
         </div>
       </div>
     </section>
@@ -211,31 +236,31 @@
     <!-- PLAY VIEWER -->
     <section class="view" id="view-viewer">
       <div class="panel">
-        <h3>🎬 Le Replay animé</h3>
-        <p class="hint">Choisis un match et une action, puis regarde-la se jouer au ralenti. Le rusher le plus dangereux s'allume en 🟡 et la jauge de pression grimpe en direct !</p>
+        <h3>🎬 Animated Replay</h3>
+        <p class="hint">Pick a game and a play, then watch it unfold in slow motion. The most dangerous rusher lights up in 🟡 and the pressure gauge rises live!</p>
         <div class="viewer-controls">
-          <label>Match
+          <label>Game
             <select id="gameSelect"></select>
           </label>
-          <label>Action
+          <label>Play
             <select id="playSelect"></select>
           </label>
         </div>
         <div class="ppi-badge" id="ppiBadge"></div>
-        <div class="play-desc" id="playDesc">Choisis un match et une action pour lancer le replay. 🍿</div>
+        <div class="play-desc" id="playDesc">Pick a game and a play to start the replay. 🍿</div>
         <div class="field-wrap">
           <canvas id="field" width="1000" height="470"></canvas>
         </div>
         <div class="pressure-meter">
-          <span class="pm-label">🌡️ Pression sur le QB</span>
+          <span class="pm-label">🌡️ Pressure on the QB</span>
           <div class="pm-track"><div class="pm-fill" id="pmFill"></div></div>
           <span class="pm-val" id="pmVal">0</span>
         </div>
         <div class="player-controls">
-          <button id="playBtn">▶ Jouer</button>
-          <button id="resetBtn">⟲ Rejouer</button>
+          <button id="playBtn">▶ Play</button>
+          <button id="resetBtn">⟲ Replay</button>
           <input type="range" id="frameSlider" min="0" max="0" value="0" />
-          <span id="frameLabel" class="frame-label">image 0 / 0</span>
+          <span id="frameLabel" class="frame-label">frame 0 / 0</span>
           <span id="eventLabel" class="event-label"></span>
         </div>
       </div>
@@ -243,7 +268,7 @@
   </main>
 
   <footer class="footer">
-    Fait avec ❤️ en Python + JavaScript · Données : NFL Next Gen Stats &amp; PFF (Big Data Bowl)
+    Made with ❤️ in Python + JavaScript · Data: NFL Next Gen Stats &amp; PFF (Big Data Bowl)
   </footer>
 
   <script src="/charts.js"></script>

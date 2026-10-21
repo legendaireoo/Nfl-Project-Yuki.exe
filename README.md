@@ -1,7 +1,7 @@
 # 🏈 Yuki.exe
 
-👉 **Télécharge `Yuki.exe` dans la dernière release :**
+👉 **Download `Yuki.exe` from the latest release:**
 
-### [⬇️ Dernière release](https://github.com/legendaireoo/Nfl-Project-Yuki.exe/releases/latest)
+### [⬇️ Latest release](https://github.com/legendaireoo/Nfl-Project-Yuki.exe/releases/latest)
 
-Puis double-clique sur `Yuki.exe`. C'est tout. 🎉
+Then double-click `Yuki.exe`. That's it. 🎉

@@ -48,6 +48,7 @@ def build() -> None:
         f"server.py{SEP}.",
         f"analytics.py{SEP}.",
         f"metrics.py{SEP}.",
+        f"pocket.py{SEP}.",
         f"prow_data.py{SEP}.",
         f"data_loader.py{SEP}.",
     ]
@@ -66,6 +67,7 @@ def build() -> None:
         "--hidden-import", "server",
         "--hidden-import", "analytics",
         "--hidden-import", "metrics",
+        "--hidden-import", "pocket",
         "--hidden-import", "prow_data",
         "--hidden-import", "data_loader",
     ]
