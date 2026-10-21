@@ -1,0 +1,55 @@
+name: Build Yuki.exe
+
+# Builds the standalone Windows executable and publishes it so anyone can
+# download a single file and double-click it — no Python, no setup.
+#
+# How to get the .exe:
+#   * Push a tag like  v1.0.0   -> a GitHub Release is created with Yuki.exe attached.
+#   * OR run this workflow manually (Actions tab -> "Build Yuki.exe" -> Run workflow)
+#     -> download it from the run's "Artifacts" section.
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install PyInstaller
+        run: python -m pip install --upgrade pip pyinstaller
+
+      - name: Build Yuki.exe
+        run: python build_exe.py
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: Yuki-windows
+          path: dist/Yuki.exe
+
+      - name: Publish to Release (on tag)
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist/Yuki.exe
+          body: |
+            ## Yuki.exe — NFL Big Data Bowl Analytics
+
+            **Download `Yuki.exe` below and double-click it.** That's all.
+
+            On first launch it downloads the NFL dataset automatically
+            (~800 MB, one time), starts the dashboard, and opens your browser.

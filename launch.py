@@ -85,34 +85,113 @@ def git_available() -> bool:
         return False
 
 
-def clone_dataset():
-    """Clone the dataset next to the executable. Returns the data dir or None."""
-    target_parent = EXE_DIR
-    target = os.path.join(target_parent, DATA_REPO_DIR_NAME)
+DATA_ZIP_URL = (
+    "https://github.com/ThompsonJamesBliss/"
+    "nfl-big-data-bowl-regional-event-data/archive/refs/heads/main.zip"
+)
+
+
+def _human(n: float) -> str:
+    for unit in ("B", "KB", "MB", "GB"):
+        if n < 1024 or unit == "GB":
+            return f"{n:.1f} {unit}"
+        n /= 1024
+    return f"{n:.1f} GB"
+
+
+def download_dataset():
+    """Fetch the dataset next to the executable, returning the data dir or None.
+
+    Tries a plain HTTPS zip download first (works with NO extra tools — pure
+    standard library), then falls back to `git clone` if that fails. This makes
+    the frozen Yuki.exe fully self-contained: the user just downloads one file.
+    """
+    target = os.path.join(EXE_DIR, DATA_REPO_DIR_NAME)
     data_dir = os.path.join(target, "data")
 
-    if os.path.isdir(target) and os.path.isfile(os.path.join(data_dir, "games.csv")):
-        return data_dir
-
-    if not git_available():
-        log("ERROR: dataset not found and 'git' is not installed.")
-        log("Install git, or download the dataset manually from:")
-        log(f"  {DATA_REPO_URL}")
-        log(f"...and place its 'data' folder at: {data_dir}")
-        return None
-
-    log("Dataset not found — cloning it now (this is a one-time ~800 MB download)...")
-    try:
-        subprocess.run(["git", "clone", "--depth", "1", DATA_REPO_URL, target], check=True)
-    except subprocess.CalledProcessError:
-        log("ERROR: git clone failed. Check your internet connection and try again.")
-        return None
-
     if os.path.isfile(os.path.join(data_dir, "games.csv")):
-        log("Dataset downloaded successfully.")
         return data_dir
-    log("ERROR: dataset clone finished but data files are missing.")
+
+    log("First launch: the NFL dataset (~800 MB) needs to be downloaded once.")
+    log("This can take a few minutes depending on your connection...")
+
+    # --- Attempt 1: HTTPS zip download via the standard library ---------
+    if _download_zip(EXE_DIR, data_dir):
+        return data_dir
+
+    # --- Attempt 2: git clone fallback ----------------------------------
+    if git_available():
+        log("Zip download failed — trying 'git clone' instead...")
+        try:
+            subprocess.run(
+                ["git", "clone", "--depth", "1", DATA_REPO_URL, target], check=True
+            )
+            if os.path.isfile(os.path.join(data_dir, "games.csv")):
+                log("Dataset downloaded successfully.")
+                return data_dir
+        except subprocess.CalledProcessError:
+            pass
+
+    log("ERROR: could not download the dataset automatically.")
+    log("Please check your internet connection and relaunch, or download it")
+    log(f"manually from {DATA_REPO_URL} and place its 'data' folder at:")
+    log(f"  {data_dir}")
     return None
+
+
+def _download_zip(dest_parent: str, data_dir: str) -> bool:
+    """Download + extract the repo zip with only the standard library."""
+    import ssl
+    import tempfile
+    import urllib.request
+    import zipfile
+
+    tmp_zip = os.path.join(tempfile.gettempdir(), "yuki_dataset.zip")
+    try:
+        ctx = ssl.create_default_context()
+        req = urllib.request.Request(DATA_ZIP_URL, headers={"User-Agent": "Yuki.exe"})
+        with urllib.request.urlopen(req, context=ctx) as resp, open(tmp_zip, "wb") as out:
+            total = int(resp.headers.get("Content-Length", 0))
+            read = 0
+            chunk = 1024 * 256
+            last_pct = -1
+            while True:
+                buf = resp.read(chunk)
+                if not buf:
+                    break
+                out.write(buf)
+                read += len(buf)
+                if total:
+                    pct = int(read * 100 / total)
+                    if pct != last_pct and pct % 5 == 0:
+                        log(f"  downloading... {pct}%  ({_human(read)} / {_human(total)})")
+                        last_pct = pct
+                else:
+                    log(f"  downloading... {_human(read)}")
+
+        log("  extracting...")
+        with zipfile.ZipFile(tmp_zip) as zf:
+            zf.extractall(dest_parent)
+
+        # GitHub zips extract to '<repo>-main'; normalize to our expected name.
+        extracted = os.path.join(dest_parent, f"{DATA_REPO_DIR_NAME}-main")
+        target = os.path.join(dest_parent, DATA_REPO_DIR_NAME)
+        if os.path.isdir(extracted) and not os.path.isdir(target):
+            os.rename(extracted, target)
+
+        if os.path.isfile(os.path.join(data_dir, "games.csv")):
+            log("Dataset ready.")
+            return True
+        return False
+    except Exception as exc:
+        log(f"  zip download error: {exc}")
+        return False
+    finally:
+        try:
+            if os.path.exists(tmp_zip):
+                os.remove(tmp_zip)
+        except OSError:
+            pass
 
 
 # ---------------------------------------------------------------------------
@@ -161,7 +240,7 @@ def main() -> int:
     # Locate data, cloning if necessary.
     data_dir = find_data_dir()
     if not data_dir:
-        data_dir = clone_dataset()
+        data_dir = download_dataset()
     if not data_dir:
         input("\nPress Enter to exit...")
         return 1

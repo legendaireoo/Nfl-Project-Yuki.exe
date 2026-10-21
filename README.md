@@ -28,32 +28,41 @@ you can run it.
 
 ## 🚀 Running it
 
-### ⭐ Easiest — one click (auto-everything)
+### ⭐⭐ For users — download ONE file, double-click (Windows)
 
-These launchers **find Python, download the dataset the first time if it's
-missing, start the server, pick a free port, and open your browser** — all
-automatically.
+1. Go to the **[Releases](../../releases)** page.
+2. Download **`Yuki.exe`**.
+3. **Double-click it.**
+
+That's the whole process. No Python, no setup, nothing else to download.
+On the **first** launch it fetches the NFL dataset automatically (~800 MB, one
+time), then starts the dashboard and opens your browser at
+`http://127.0.0.1:8000`. Every later launch is instant.
+
+> Getting the `.exe`: push a tag (e.g. `git tag v1.0.0 && git push --tags`) and
+> the included GitHub Action builds `Yuki.exe` and attaches it to a Release
+> automatically. You can also trigger it manually from the **Actions** tab and
+> grab the `.exe` from the run's artifacts.
+
+### 🏗️ Build `Yuki.exe` yourself (on Windows)
+
+```bash
+pip install pyinstaller
+python build_exe.py          # -> dist\Yuki.exe
+```
+
+Ship that single file. Build on the OS you want to target (Windows -> `.exe`).
+
+### ⭐ One click without building (needs Python installed)
 
 | OS | Do this |
 |----|---------|
 | **Windows** | Double-click **`Start-Yuki.bat`** |
-| **macOS / Linux** | Run **`./start-yuki.sh`** (or `bash start-yuki.sh`) |
+| **macOS / Linux** | Run **`./start-yuki.sh`** |
 | **Any OS** | `python3 launch.py` |
 
-That's it — the dashboard opens at `http://127.0.0.1:8000` by itself.
-(First launch clones the ~800 MB dataset with `git`; later launches are instant.)
-
-### 🏗️ Build a true standalone `Yuki.exe` (no Python needed by the user)
-
-```bash
-pip install pyinstaller
-python build_exe.py
-```
-
-This produces a single self-contained binary in `dist/`:
-`Yuki.exe` on Windows, `Yuki` on macOS/Linux. Ship that one file — the user
-just double-clicks it. On first run it fetches the dataset automatically
-(needs `git` + internet, one time). Build on the OS you want to target.
+Same auto-everything behaviour: locates/downloads the data, picks a free port,
+starts the server, opens the browser.
 
 ### 🔧 Manual (classic) start
 
