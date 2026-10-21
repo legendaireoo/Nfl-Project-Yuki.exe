@@ -28,17 +28,42 @@ you can run it.
 
 ## 🚀 Running it
 
+### ⭐ Easiest — one click (auto-everything)
+
+These launchers **find Python, download the dataset the first time if it's
+missing, start the server, pick a free port, and open your browser** — all
+automatically.
+
+| OS | Do this |
+|----|---------|
+| **Windows** | Double-click **`Start-Yuki.bat`** |
+| **macOS / Linux** | Run **`./start-yuki.sh`** (or `bash start-yuki.sh`) |
+| **Any OS** | `python3 launch.py` |
+
+That's it — the dashboard opens at `http://127.0.0.1:8000` by itself.
+(First launch clones the ~800 MB dataset with `git`; later launches are instant.)
+
+### 🏗️ Build a true standalone `Yuki.exe` (no Python needed by the user)
+
 ```bash
-# 1. Make sure the dataset is available. By default Yuki looks for it at
-#    ../nfl-big-data-bowl-regional-event-data/data  (next to this repo).
-#    To point somewhere else:
+pip install pyinstaller
+python build_exe.py
+```
+
+This produces a single self-contained binary in `dist/`:
+`Yuki.exe` on Windows, `Yuki` on macOS/Linux. Ship that one file — the user
+just double-clicks it. On first run it fetches the dataset automatically
+(needs `git` + internet, one time). Build on the OS you want to target.
+
+### 🔧 Manual (classic) start
+
+```bash
+# By default Yuki looks for the dataset at
+#   ../nfl-big-data-bowl-regional-event-data/data  (next to this repo).
+# To point somewhere else:
 export YUKI_DATA_DIR=/path/to/nfl-big-data-bowl-regional-event-data/data
 
-# 2. Start the server (Python 3.8+)
-python3 server.py
-
-# 3. Open the app
-#    http://127.0.0.1:8000
+python3 server.py        # then open http://127.0.0.1:8000
 ```
 
 Optional environment variables:
@@ -53,6 +78,10 @@ Optional environment variables:
 
 ```
 Nfl-Project-Yuki.exe/
+├── launch.py        # ⭐ one-click launcher: find data, start server, open browser
+├── Start-Yuki.bat   # Windows double-click launcher
+├── start-yuki.sh    # macOS / Linux launcher
+├── build_exe.py     # builds a standalone Yuki.exe via PyInstaller
 ├── server.py        # stdlib HTTP server: static files + JSON API
 ├── analytics.py     # all the stat computations (coverage, pressure, teams, plays)
 ├── data_loader.py   # CSV parsing + caching (no pandas)
