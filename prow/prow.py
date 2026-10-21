@@ -20,7 +20,7 @@ import numpy as np
 import pandas as pd
 
 # ---------------------------------------------------------------- configuration
-ROOT = Path(__file__).parent
+ROOT = Path(sys.executable).parent if getattr(sys, "frozen", False) else Path(__file__).parent
 DATA_DIR = ROOT / "data"
 TRACK_DIR = DATA_DIR / "tracking"
 OUT_DIR = ROOT / "output"
@@ -257,3 +257,5 @@ if __name__ == "__main__":
     feats = add_targets(feats, plays, players)
     import analysis
     analysis.run(feats, plays, players, games)
+    import make_report
+    print(f"Report page: {make_report.build()}")

@@ -142,16 +142,22 @@ def run(feats, plays, players, games):
     op, cv = t[t[col] > 0], t[t[col] == 0]
     diff = op.complete.mean() - cv.complete.mean()
     lo, hi = prow.game_bootstrap(t, lambda d: d[d[col] > 0].complete.mean() - d[d[col] == 0].complete.mean())
+    head = dict(n_throws=len(t), n_games=int(t.gameId.nunique()), open_rate=op.complete.mean(), n_open=len(op),
+                covered_rate=cv.complete.mean(), n_covered=len(cv), diff=diff, diff_lo=lo, diff_hi=hi)
     say(f"Open at release {op.complete.mean():.1%} (n={len(op)}) vs covered {cv.complete.mean():.1%} (n={len(cv)}): "
         f"+{diff * 100:.1f} pts, game-bootstrap 95% CI [{lo * 100:.1f}, {hi * 100:.1f}]")
     fresh, old = op[op[col] <= 0.5], op[op[col] > 1.0]
     lo, hi = prow.game_bootstrap(op, lambda d: d[d[col] > 1.0].complete.mean() - d[d[col] <= 0.5].complete.mean())
+    head.update(old_rate=old.complete.mean(), n_old=len(old), fresh_rate=fresh.complete.mean(), n_fresh=len(fresh),
+                age_lo=lo, age_hi=hi)
     say(f"Among open targets: window > 1 s {old.complete.mean():.1%} (n={len(old)}) vs fresh <= 0.5 s "
         f"{fresh.complete.mean():.1%} (n={len(fresh)}): diff {(old.complete.mean() - fresh.complete.mean()) * 100:+.1f} pts, "
         f"95% CI [{lo * 100:.1f}, {hi * 100:.1f}]")
     d = t.dropna(subset=["depth_release"])
     for form in ["complete ~ sep_release", f"complete ~ sep_release + {col} + depth_release + time_to_throw"]:
         m = prow.logit_clustered(d, form)
+        if col in m.params:
+            head.update(prow_coef=m.params[col], prow_p=m.pvalues[col])
         say(f"Logit (game-clustered SE) {form}: " + ", ".join(
             f"{k}={v:+.3f} (p={m.pvalues[k]:.3g})" for k, v in m.params.items() if k != "Intercept"))
     say("\nSensitivity (open at release vs covered, all k):")
@@ -162,6 +168,8 @@ def run(feats, plays, players, games):
 
     lo, hi = prow.game_bootstrap(t, lambda d: d.missed.mean())
     mt = t[t.missed == 1]
+    head.update(missed=t.missed.mean(), n_missed=len(mt), missed_lo=lo, missed_hi=hi,
+                missed_completion=mt.complete.mean())
     say(f"\nMissed windows (target < {K:g} yd at release, teammate open >= {ALT_MIN:g} s): "
         f"{t.missed.mean():.1%} of throws (n={len(mt)}), game-bootstrap 95% CI [{lo:.1%}, {hi:.1%}]")
     say(f"  completion on those throws {mt.complete.mean():.1%}; open teammate median depth "
@@ -183,6 +191,12 @@ def run(feats, plays, players, games):
              highlight=[int(ex.alt_nflId)])
     say(f"Play Lab example: gameId={int(ex.gameId)} playId={int(ex.playId)} target sep {ex.sep_release:.1f} yd, "
         f"teammate {names.get(int(ex.alt_nflId))} PROW {ex[f'alt_prow_{K:g}']:.1f} s")
+    head.update(n_qbs=len(q), qb_min=q.rate.min(), qb_max=q.rate.max(),
+                ex_target=names.get(int(ex.nflId)), ex_target_sep=ex.sep_release,
+                ex_alt=names.get(int(ex.alt_nflId)), ex_alt_prow=ex[f"alt_prow_{K:g}"])
+    import json
+    (prow.OUT_DIR / "headline.json").write_text(
+        json.dumps({k: (v.item() if hasattr(v, "item") else v) for k, v in head.items()}, indent=1), encoding="utf-8")
     t.to_csv(prow.OUT_DIR / "targeted_throws.csv", index=False)
     (prow.OUT_DIR / "summary.txt").write_text("\n".join(lines), encoding="utf-8")
     print(f"\nWrote figures + summary to {prow.OUT_DIR}")

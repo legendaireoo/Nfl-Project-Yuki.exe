@@ -11,7 +11,8 @@ import pandas as pd
 import requests
 
 BASE = "https://raw.githubusercontent.com/ThompsonJamesBliss/nfl-big-data-bowl-regional-event-data/main/data"
-DATA_DIR = Path(__file__).parent / "data"
+ROOT = Path(sys.executable).parent if getattr(sys, "frozen", False) else Path(__file__).parent
+DATA_DIR = ROOT / "data"
 
 
 def fetch(rel_path: str) -> str:
