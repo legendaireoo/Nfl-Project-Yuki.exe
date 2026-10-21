@@ -83,7 +83,14 @@ you can run it.
 | **Pass Block** | Best protectors — lowest pressure-allowed rate (min. 50 snaps) |
 | **Teams** | Scatter of team pass-rush rate vs. pressure-allowed rate, with full table |
 | **🔥 Pressure-mètre** | The original stat, playful edition: pressure leaderboards with nicknames, the Ghosts, team vibes, and the hottest plays (click to watch) |
+| **🎯 Fenêtre de tir (PROW)** | A second metric: how long the targeted receiver had been open at the throw. Interactive threshold slider (2–5 yd), "missed window" QB ranking, and clickable example plays |
 | **🎮 Devine la pression** | Mini-game: watch a real play, guess the pressure level, rack up points and streaks |
+
+All data tables are **click-to-sort** (click any column header).
+
+> **Crédit :** la métrique **PROW (Pre-Release Open Window)** et ses données
+> pré-calculées proviennent du travail de l'analyse `Linali_-branch` ; elle est
+> ici réintégrée en version zéro-dépendance (lecture CSV + agrégats stdlib).
 | **Play Viewer** | Pick any game + play and **animate the tracking data** on a football field — players colored by offense/defense, ball, direction arrows, line of scrimmage, live event tags, and a **live PPI badge** |
 
 ## 🚀 Running it

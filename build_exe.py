@@ -43,10 +43,12 @@ def build() -> None:
     # Bundle the frontend assets and all backend modules.
     add_data = [
         f"web{SEP}web",
+        f"web_data{SEP}web_data",
         f"config.py{SEP}.",
         f"server.py{SEP}.",
         f"analytics.py{SEP}.",
         f"metrics.py{SEP}.",
+        f"prow_data.py{SEP}.",
         f"data_loader.py{SEP}.",
     ]
 
@@ -64,6 +66,7 @@ def build() -> None:
         "--hidden-import", "server",
         "--hidden-import", "analytics",
         "--hidden-import", "metrics",
+        "--hidden-import", "prow_data",
         "--hidden-import", "data_loader",
     ]
     for spec in add_data:

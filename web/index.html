@@ -22,6 +22,7 @@
       <button class="tab" data-view="block">Pass Block</button>
       <button class="tab" data-view="teams">Teams</button>
       <button class="tab ppi-tab" data-view="ppi">🔥 Pressure-mètre</button>
+      <button class="tab prow-tab" data-view="prow">🎯 Fenêtre de tir</button>
       <button class="tab game-tab" data-view="game">🎮 Devine la pression</button>
       <button class="tab" data-view="viewer">🎬 Play Viewer</button>
     </nav>
@@ -61,7 +62,7 @@
     <section class="view" id="view-rush">
       <div class="panel">
         <h3>😤 Les meilleurs chasseurs de QB</h3>
-        <p class="hint">Ceux qui mettent le plus de pression (coups + bousculades + sacks). Mini 20 actions.</p>
+        <p class="hint">Ceux qui mettent le plus de pression (coups + bousculades + sacks). Mini 20 actions. <span class="tip">💡 clique sur une colonne pour trier !</span></p>
         <div class="table-wrap"><table id="rushTable"></table></div>
       </div>
     </section>
@@ -70,7 +71,7 @@
     <section class="view" id="view-block">
       <div class="panel">
         <h3>🧱 Les meilleurs gardes du corps</h3>
-        <p class="hint">Les bloqueurs qui laissent passer le moins de pression. Mini 50 actions.</p>
+        <p class="hint">Les bloqueurs qui laissent passer le moins de pression. Mini 50 actions. <span class="tip">💡 clique sur une colonne pour trier !</span></p>
         <div class="table-wrap"><table id="blockTable"></table></div>
       </div>
     </section>
@@ -141,6 +142,50 @@
         <h3>💥 Le Top des actions les plus chaudes</h3>
         <p class="hint">Clique sur "regarder" pour revivre l'action au ralenti. 🍿</p>
         <div class="table-wrap"><table id="ppiPlaysTable"></table></div>
+      </div>
+    </section>
+
+    <!-- FENÊTRE DE TIR (PROW) -->
+    <section class="view" id="view-prow">
+      <div class="panel ppi-hero">
+        <h3>🎯 La fenêtre de tir <span class="badge">receveurs</span></h3>
+        <p class="hint">
+          "Il était grand ouvert, pourquoi le QB ne l'a pas vu ?!" 🗣️ On a mesuré, sur
+          <strong>7 221 passes</strong>, <strong>combien de temps</strong> le receveur visé était
+          déjà démarqué au moment du lancer. Surprise : être ouvert <em>au bon moment</em> compte
+          énormément… mais être ouvert <em>depuis longtemps</em> ne change presque rien ! 🤯
+        </p>
+        <div class="ppi-controls">
+          <label>Seuil "démarqué" (distance au défenseur le + proche)
+            <select id="prowK">
+              <option value="2">≥ 2 yards (serré)</option>
+              <option value="3" selected>≥ 3 yards</option>
+              <option value="4">≥ 4 yards</option>
+              <option value="5">≥ 5 yards (grand large)</option>
+            </select>
+          </label>
+          <span class="loading" id="prowStatus"></span>
+        </div>
+        <div class="cards" id="prowCards"></div>
+      </div>
+
+      <div class="panel">
+        <h3>📊 Réussite selon la durée d'ouverture</h3>
+        <p class="hint" id="prowChartHint"></p>
+        <canvas class="chart" id="prowChart" height="300"></canvas>
+      </div>
+
+      <div class="grid-2">
+        <div class="panel">
+          <h3>🙈 Les QB qui ratent le plus de fenêtres</h3>
+          <p class="hint">% de passes vers un receveur couvert alors qu'un coéquipier était ouvert ≥ 1s. <em>Descriptif, pas une note</em> (le coéquipier peut être hors champ de vision).</p>
+          <div class="table-wrap"><table id="prowQbTable"></table></div>
+        </div>
+        <div class="panel">
+          <h3>🎬 Fenêtres ratées en vidéo</h3>
+          <p class="hint">Des cas flagrants : cible couverte, pote grand ouvert longtemps. Clique pour revivre l'action !</p>
+          <div class="table-wrap"><table id="prowExTable"></table></div>
+        </div>
       </div>
     </section>
 

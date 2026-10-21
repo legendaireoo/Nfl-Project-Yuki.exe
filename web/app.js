@@ -5,6 +5,42 @@
   const C = window.YukiCharts;
   const api = (path) => fetch(path).then((r) => r.json());
 
+  // ---- universal click-to-sort for any <table> --------------------------
+  // Click a header to sort rows by that column; click again to reverse.
+  document.addEventListener("click", (e) => {
+    const th = e.target.closest("th");
+    if (!th) return;
+    const table = th.closest("table");
+    if (!table || !table.tBodies.length) return;
+    const idx = Array.from(th.parentNode.children).indexOf(th);
+    const tbody = table.tBodies[0];
+    const rows = Array.from(tbody.rows).filter((r) => r.cells.length > idx);
+    if (rows.length < 2) return;
+
+    const asc = table.dataset.sortCol == idx ? table.dataset.sortAsc !== "true" : false;
+    const num = (s) => {
+      const m = String(s).replace(/[^0-9.\-]/g, "");
+      return m === "" ? null : parseFloat(m);
+    };
+    rows.sort((a, b) => {
+      const av = a.cells[idx].textContent.trim();
+      const bv = b.cells[idx].textContent.trim();
+      const an = num(av), bn = num(bv);
+      let cmp;
+      if (an !== null && bn !== null) cmp = an - bn;
+      else cmp = av.localeCompare(bv, "fr");
+      return asc ? cmp : -cmp;
+    });
+    rows.forEach((r) => tbody.appendChild(r));
+    table.dataset.sortCol = idx;
+    table.dataset.sortAsc = asc;
+    // header arrow indicator
+    Array.from(th.parentNode.children).forEach((h) =>
+      (h.textContent = h.textContent.replace(/[ ▲▼]+$/, ""))
+    );
+    th.textContent = th.textContent.replace(/[ ▲▼]+$/, "") + (asc ? " ▲" : " ▼");
+  });
+
   // ---- tab navigation ---------------------------------------------------
   const loaded = {};
   document.getElementById("tabs").addEventListener("click", (e) => {
@@ -30,6 +66,7 @@
     else if (view === "block") loadBlock();
     else if (view === "teams") loadTeams();
     else if (view === "ppi") loadPPI();
+    else if (view === "prow") loadPROW();
     else if (view === "game") loadGame();
     else if (view === "viewer") loadViewer();
   }
@@ -401,6 +438,77 @@
       slider.value = 0;
       viewer.load(play);
       document.getElementById("playBtn").textContent = "▶ Jouer";
+    });
+  }
+
+  // ---- FENÊTRE DE TIR (PROW) -------------------------------------------
+  function loadPROW() {
+    const kSel = document.getElementById("prowK");
+    kSel.addEventListener("change", () => drawProwChart(parseInt(kSel.value, 10)));
+    const status = document.getElementById("prowStatus");
+    status.textContent = "🔄 Chargement…";
+    api("/api/prow").then((d) => {
+      cache.prow = d;
+      if (!d.available) {
+        status.textContent = "⚠️ Données PROW indisponibles.";
+        return;
+      }
+      status.textContent = `✓ ${d.headline.n_throws.toLocaleString()} passes · ${d.headline.n_games} matchs`;
+      drawPROW(d);
+    });
+  }
+
+  function drawPROW(d) {
+    const h = d.headline;
+    const cards = [
+      { label: "🎯 Passes analysées", value: h.n_throws.toLocaleString() },
+      { label: "✅ Ouvert au lancer", value: Math.round(h.open_rate * 100) + "%", cls: "accent" },
+      { label: "😶 Couvert au lancer", value: Math.round(h.covered_rate * 100) + "%", cls: "danger" },
+      { label: "🙈 Fenêtres ratées", value: Math.round(h.missed * 100) + "%", cls: "warn" },
+    ];
+    document.getElementById("prowCards").innerHTML = cards
+      .map((c) => `<div class="card ${c.cls || ""}"><div class="value">${c.value}</div><div class="label">${c.label}</div></div>`)
+      .join("");
+
+    // QB table
+    document.getElementById("prowQbTable").innerHTML =
+      `<thead><tr><th>#</th><th>Quarterback</th><th class="num">Passes</th><th class="num">🙈 Fenêtres ratées</th></tr></thead><tbody>` +
+      d.qbMissed.map((q, i) => `<tr>
+        <td class="rank">${i + 1}</td><td>${q.name}</td>
+        <td class="num">${q.throws}</td><td class="num"><strong>${q.missedPct}%</strong></td></tr>`).join("") +
+      `</tbody>`;
+
+    // Examples table (clickable -> viewer)
+    document.getElementById("prowExTable").innerHTML =
+      `<thead><tr><th>Cible (couverte)</th><th>Coéquipier ouvert</th><th class="num">Ouvert</th><th></th></tr></thead><tbody>` +
+      d.examples.slice(0, 12).map((e) => `<tr>
+        <td>${e.target} <span class="mini">(${e.targetSep}yd)</span></td>
+        <td>${e.altName || "?"}</td>
+        <td class="num">${e.altProw}s</td>
+        <td><a href="#" class="goplay" data-game="${e.gameId}" data-play="${e.playId}">🍿 regarder</a></td></tr>`).join("") +
+      `</tbody>`;
+    document.querySelectorAll("#prowExTable .goplay").forEach((a) => {
+      a.addEventListener("click", (e) => {
+        e.preventDefault();
+        jumpToPlay(a.dataset.game, a.dataset.play);
+      });
+    });
+
+    drawProwChart(3);
+  }
+
+  function drawProwChart(k) {
+    api(`/api/prow-buckets?k=${k}`).then((br) => {
+      C.bar(
+        document.getElementById("prowChart"),
+        br.buckets.map((b) => ({ label: b.label, value: b.completionPct })),
+        { valueFmt: (v) => v + "%" }
+      );
+      const diff = (br.openPct - br.coveredPct).toFixed(1);
+      document.getElementById("prowChartHint").innerHTML =
+        `Avec un seuil de <strong>${k} yards</strong> : ouvert au lancer = <strong>${br.openPct}%</strong> de réussite, ` +
+        `couvert = <strong>${br.coveredPct}%</strong> → un écart de <strong>+${diff} points</strong> ! ` +
+        `Mais remarque que les barres "ouvert" sont presque toutes à la même hauteur : la durée ne change (presque) rien. 🤷`;
     });
   }
 

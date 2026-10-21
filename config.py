@@ -33,6 +33,9 @@ PORT = int(os.environ.get("YUKI_PORT", "8000"))
 
 WEB_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "web")
 
+# Pre-computed datasets shipped with the app (e.g. PROW targeted throws).
+WEB_DATA_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "web_data")
+
 # Field dimensions (yards) used by the play viewer.
 FIELD_LENGTH = 120.0  # includes both end zones
 FIELD_WIDTH = 53.3

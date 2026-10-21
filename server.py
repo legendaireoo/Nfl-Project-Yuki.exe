@@ -19,6 +19,7 @@ from urllib.parse import parse_qs, urlparse
 import analytics
 import config
 import metrics
+import prow_data
 
 STATIC_TYPES = {
     ".html": "text/html; charset=utf-8",
@@ -121,6 +122,17 @@ class Handler(BaseHTTPRequestHandler):
                 return
             res = metrics.play_ppi(game_id, play_id)
             self._send_json(res if res else {"error": "not a dropback / no PPI"})
+        elif path == "/api/prow":
+            self._send_json(prow_data.summary())
+        elif path == "/api/prow-buckets":
+            k = qs.get("k", ["3"])[0]
+            try:
+                k = int(k)
+                if k not in prow_data.THRESHOLDS:
+                    k = 3
+            except ValueError:
+                k = 3
+            self._send_json(prow_data.bucket_rates(k))
         else:
             self._send_json({"error": "unknown endpoint"}, 404)
 
