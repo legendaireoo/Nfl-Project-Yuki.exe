@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Yuki.exe — NFL Analytics</title>
+  <link rel="stylesheet" href="/style.css" />
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <span class="logo">🏈</span>
+      <div>
+        <h1>Yuki<span class="ext">.exe</span></h1>
+        <p class="tagline">NFL Big Data Bowl — Pass Rush &amp; Coverage Analytics</p>
+      </div>
+    </div>
+    <nav class="tabs" id="tabs">
+      <button class="tab active" data-view="overview">Overview</button>
+      <button class="tab" data-view="coverage">Coverages</button>
+      <button class="tab" data-view="rush">Pass Rush</button>
+      <button class="tab" data-view="block">Pass Block</button>
+      <button class="tab" data-view="teams">Teams</button>
+      <button class="tab" data-view="viewer">Play Viewer</button>
+    </nav>
+  </header>
+
+  <main id="app">
+    <!-- OVERVIEW -->
+    <section class="view active" id="view-overview">
+      <div class="cards" id="statCards"></div>
+      <div class="grid-2">
+        <div class="panel">
+          <h3>Defensive Coverage Usage</h3>
+          <canvas class="chart" id="covChart" height="260"></canvas>
+        </div>
+        <div class="panel">
+          <h3>Dropback Outcomes</h3>
+          <canvas class="chart" id="resChart" height="260"></canvas>
+        </div>
+      </div>
+      <div class="panel">
+        <h3>Offensive Formations</h3>
+        <canvas class="chart" id="formChart" height="220"></canvas>
+      </div>
+    </section>
+
+    <!-- COVERAGE -->
+    <section class="view" id="view-coverage">
+      <div class="panel">
+        <h3>Coverage Efficiency</h3>
+        <p class="hint">Completion % allowed and average yards gained vs. each defensive coverage scheme.</p>
+        <canvas class="chart" id="coverageBar" height="300"></canvas>
+        <div class="table-wrap"><table id="coverageTable"></table></div>
+      </div>
+    </section>
+
+    <!-- PASS RUSH -->
+    <section class="view" id="view-rush">
+      <div class="panel">
+        <h3>Pass-Rush Leaders</h3>
+        <p class="hint">Most total pressures (hits + hurries + sacks). Min. 20 pass-rush snaps.</p>
+        <div class="table-wrap"><table id="rushTable"></table></div>
+      </div>
+    </section>
+
+    <!-- PASS BLOCK -->
+    <section class="view" id="view-block">
+      <div class="panel">
+        <h3>Top Pass Protectors</h3>
+        <p class="hint">Lowest pressure-allowed rate. Min. 50 pass-block snaps.</p>
+        <div class="table-wrap"><table id="blockTable"></table></div>
+      </div>
+    </section>
+
+    <!-- TEAMS -->
+    <section class="view" id="view-teams">
+      <div class="panel">
+        <h3>Team Pass-Rush vs. Pass-Protection</h3>
+        <p class="hint">Scatter: pressure rate generated (defense) vs. pressure rate allowed (offense).</p>
+        <canvas class="chart" id="teamScatter" height="420"></canvas>
+        <div class="table-wrap"><table id="teamTable"></table></div>
+      </div>
+    </section>
+
+    <!-- PLAY VIEWER -->
+    <section class="view" id="view-viewer">
+      <div class="panel">
+        <h3>Play Animation Viewer</h3>
+        <div class="viewer-controls">
+          <label>Game
+            <select id="gameSelect"></select>
+          </label>
+          <label>Play
+            <select id="playSelect"></select>
+          </label>
+        </div>
+        <div class="play-desc" id="playDesc">Select a game and play to animate the tracking data.</div>
+        <div class="field-wrap">
+          <canvas id="field" width="1000" height="470"></canvas>
+        </div>
+        <div class="player-controls">
+          <button id="playBtn">▶ Play</button>
+          <button id="resetBtn">⟲ Reset</button>
+          <input type="range" id="frameSlider" min="0" max="0" value="0" />
+          <span id="frameLabel" class="frame-label">frame 0 / 0</span>
+          <span id="eventLabel" class="event-label"></span>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    Built with Python stdlib + vanilla JS · Data: NFL Next Gen Stats &amp; PFF (Big Data Bowl)
+  </footer>
+
+  <script src="/charts.js"></script>
+  <script src="/field.js"></script>
+  <script src="/app.js"></script>
+</body>
+</html>
