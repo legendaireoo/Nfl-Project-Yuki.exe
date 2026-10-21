@@ -605,9 +605,9 @@
       startBtn.textContent = "🎲 New game";
       if (topPlays.length) { newRound(); return; }
       choicesEl.innerHTML = "⏳ Setting up the game…";
-      api("/api/ppi?games=20").then((d) => {
-        // use a spread of plays across all pressure levels for variety
-        topPlays = (d.quizPlays && d.quizPlays.length ? d.quizPlays : d.topPlays || []).concat();
+      // lightweight: only the play pool, over few games -> fast cold start
+      api("/api/game-pool?games=6").then((d) => {
+        topPlays = (d.quizPlays || []).concat();
         if (topPlays.length < 8) { choicesEl.innerHTML = "Not enough data."; return; }
         newRound();
       });
@@ -632,6 +632,7 @@
     let pool = [];
     let bag = [];
     let current = null;
+    let currentPlay = null; // cache the loaded play so stages don't refetch
     let stage = 0; // 0 = hold/break, 1 = side, 2 = rusher
     let score = 0, total = 0, streak = 0;
 
@@ -661,6 +662,7 @@
       stage = 0;
       current = pick();
       api(`/api/play?gameId=${current.gameId}&playId=${current.playId}`).then((play) => {
+        currentPlay = play;
         descEl.innerHTML = `<strong>${(play.meta || {}).defensiveTeam} rush ⚔️ ${(play.meta || {}).possessionTeam} protection</strong> — watch the first moment… will the pocket hold?`;
         pwViewer.load(play);
         pwViewer.reset();
@@ -735,23 +737,22 @@
 
     function askRusher() {
       // offer the true breacher + a few decoys from this play's rushers
-      api(`/api/play?gameId=${current.gameId}&playId=${current.playId}`).then((play) => {
-        const rushers = {};
-        (play.frames || []).forEach((fr) =>
-          fr.forEach((p) => {
-            if (p.nflId && p.name) pbiCache[p.nflId] = p.name; // cache every name we see
-            if (p.position && /DE|DT|OLB|ILB|LB|NT|MLB/.test(p.position) && p.nflId) rushers[p.nflId] = p.name || ("#" + p.nflId);
-          })
-        );
-        rushers[current.breachRusher] = nameOf(current.breachRusher);
-        let ids = Object.keys(rushers);
-        // keep the true one + up to 3 others
-        ids = ids.filter((id) => id !== current.breachRusher);
-        shuffle(ids);
-        const picks = [current.breachRusher].concat(ids.slice(0, 3));
-        shuffle(picks);
-        showChoices(picks.map((id) => ({ v: id, label: "😤 " + (rushers[id] || ("#" + id)) })));
-      });
+      // (reuse the already-loaded play — no second network round-trip)
+      const play = currentPlay || {};
+      const rushers = {};
+      (play.frames || []).forEach((fr) =>
+        fr.forEach((p) => {
+          if (p.nflId && p.name) pbiCache[p.nflId] = p.name; // cache every name we see
+          if (p.position && /DE|DT|OLB|ILB|LB|NT|MLB/.test(p.position) && p.nflId) rushers[p.nflId] = p.name || ("#" + p.nflId);
+        })
+      );
+      rushers[current.breachRusher] = nameOf(current.breachRusher);
+      let ids = Object.keys(rushers);
+      ids = ids.filter((id) => id !== current.breachRusher);
+      shuffle(ids);
+      const picks = [current.breachRusher].concat(ids.slice(0, 3));
+      shuffle(picks);
+      showChoices(picks.map((id) => ({ v: id, label: "😤 " + (rushers[id] || ("#" + id)) })));
     }
 
     function nameOf(id) { return pbiCache[id] || ("#" + id); }
@@ -772,9 +773,9 @@
       startBtn.textContent = "🎲 New game";
       if (pool.length) { newRound(); return; }
       choicesEl.innerHTML = "⏳ Setting up the game…";
-      api("/api/pocket?games=20").then((d) => {
+      api("/api/pocket-pool?games=6").then((d) => {
         pool = (d.pool || []).concat();
-        // cache rusher names from the leaderboard for nicer labels
+        // cache rusher names for nicer labels
         (d.leaders || []).forEach((r) => (pbiCache[r.nflId] = r.name));
         if (pool.length < 6) { choicesEl.innerHTML = "Not enough data."; return; }
         newRound();
@@ -786,6 +787,18 @@
     updateScore();
   }
 
+  // ---- pre-warm the mini-game pools in the background -------------------
+  // Fire-and-forget: warms the server-side caches so the games start instantly
+  // once the user opens them. Runs after first paint so it never blocks the UI.
+  function prewarmGames() {
+    const warm = (url) => fetch(url).then((r) => r.json()).catch(() => {});
+    // stagger slightly so the Overview renders first
+    setTimeout(() => warm("/api/game-pool?games=6"), 400);
+    setTimeout(() => warm("/api/pocket-pool?games=6"), 1200);
+  }
+
   // initial view
   render("overview");
+  if ("requestIdleCallback" in window) requestIdleCallback(prewarmGames);
+  else setTimeout(prewarmGames, 600);
 })();

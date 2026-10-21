@@ -372,3 +372,27 @@ def _aggregate(max_games: int) -> dict:
 def leaderboard(max_games: int = 20) -> dict:
     """PPI leaderboards. Defaults to the first 20 games for responsiveness."""
     return _aggregate(max_games)
+
+
+@functools.lru_cache(maxsize=4)
+def game_pool(max_games: int = 6) -> dict:
+    """Lightweight: just a spread of scored plays for the mini-game.
+
+    Skips the rusher/ghost/team aggregation so the game starts fast.
+    """
+    play_scores: List[dict] = []
+    games = [g["gameId"] for g in dl.games() if dl.has_tracking(g["gameId"])]
+    games = games[:max_games]
+    for gid in games:
+        res = game_ppi(gid)
+        for pid, r in res.items():
+            play_scores.append({
+                "gameId": gid, "playId": pid, "ppi": r["ppi"],
+                "timeToThrow": r["timeToThrow"],
+            })
+    play_scores.sort(key=lambda r: r["ppi"], reverse=True)
+    spread = []
+    if play_scores:
+        step = max(1, len(play_scores) // 60)
+        spread = play_scores[::step][:60]
+    return {"quizPlays": spread, "gamesAnalyzed": len(games), "playsScored": len(play_scores)}

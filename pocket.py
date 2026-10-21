@@ -260,3 +260,39 @@ def _balanced_pool(pool: List[dict], n: int = 60) -> List[dict]:
 
 def summary(max_games: int = 20) -> dict:
     return _aggregate(max_games)
+
+
+@functools.lru_cache(maxsize=4)
+def game_pool(max_games: int = 6) -> dict:
+    """Lightweight: just a balanced play pool (+ breacher names) for the game.
+
+    Skips the Lane Win Rate leaderboard so the game starts fast.
+    """
+    pbi = dl.players_by_id()
+    play_meta: Dict[tuple, dict] = {}
+    for p in dl.plays():
+        play_meta[(p["gameId"], p["playId"])] = {
+            "off": p["possessionTeam"], "def": p["defensiveTeam"],
+        }
+    games = [g["gameId"] for g in dl.games() if dl.has_tracking(g["gameId"])]
+    games = games[:max_games]
+    pool: List[dict] = []
+    names: Dict[str, str] = {}
+    for gid in games:
+        lanes = game_lanes(gid)
+        for pid, r in lanes.items():
+            meta = play_meta.get((gid, pid))
+            if not meta:
+                continue
+            if r["breachRusher"]:
+                p = pbi.get(r["breachRusher"], {})
+                names[r["breachRusher"]] = p.get("displayName", "")
+            pool.append({
+                "gameId": gid, "playId": pid,
+                "breaks": r["breaks"], "breachTime": r["breachTime"],
+                "breachSide": r["breachSide"], "breachRusher": r["breachRusher"],
+                "cleanPct": r["cleanPct"], "def": meta["def"], "off": meta["off"],
+            })
+    leaders = [{"nflId": nid, "name": nm} for nid, nm in names.items() if nm]
+    return {"pool": _balanced_pool(pool), "leaders": leaders,
+            "gamesAnalyzed": len(games), "playsScored": len(pool)}

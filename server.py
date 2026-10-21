@@ -130,6 +130,20 @@ class Handler(BaseHTTPRequestHandler):
             except ValueError:
                 n = 20
             self._send_json(pocket.summary(n))
+        elif path == "/api/pocket-pool":
+            n = qs.get("games", ["6"])[0]
+            try:
+                n = max(1, min(122, int(n)))
+            except ValueError:
+                n = 6
+            self._send_json(pocket.game_pool(n))
+        elif path == "/api/game-pool":
+            n = qs.get("games", ["6"])[0]
+            try:
+                n = max(1, min(122, int(n)))
+            except ValueError:
+                n = 6
+            self._send_json(metrics.game_pool(n))
         elif path == "/api/pocket-play":
             game_id = qs.get("gameId", [None])[0]
             play_id = qs.get("playId", [None])[0]
