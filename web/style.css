@@ -149,3 +149,10 @@ select {
 
 .ppi-badge { font-size: 14px; margin-bottom: 8px; color: var(--muted); font-variant-numeric: tabular-nums; }
 .ppi-badge strong { font-size: 18px; }
+
+/* Live pressure meter under the field */
+.pressure-meter { display: flex; align-items: center; gap: 12px; margin-top: 12px; }
+.pm-label { font-size: 12.5px; color: var(--muted); white-space: nowrap; }
+.pm-track { flex: 1; height: 14px; background: var(--panel-2); border: 1px solid var(--border); border-radius: 999px; overflow: hidden; }
+.pm-fill { height: 100%; width: 0%; background: #37d6a0; border-radius: 999px; transition: width 0.08s linear, background 0.2s; }
+.pm-val { font-size: 14px; font-weight: 700; font-variant-numeric: tabular-nums; min-width: 28px; text-align: right; }

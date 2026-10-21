@@ -14,6 +14,8 @@
 > schemes; a **scout** to spot players whose impact the stat sheet misses; a **broadcaster**
 > to quantify "that QB was under siege all night" with a real number.
 
+![PPI infographic](ppi_report.svg)
+
 Data source:
 [ThompsonJamesBliss/nfl-big-data-bowl-regional-event-data](https://github.com/ThompsonJamesBliss/nfl-big-data-bowl-regional-event-data)
 (tracking by NFL Next Gen Stats, scouting by PFF).
@@ -38,9 +40,17 @@ This yields three things the official stats can't:
 | **PPI generated** | A pass-rush productivity score per defender (T.J. Watt, Bosa, Hargrave top it — the metric passes the eye test) |
 | **👻 Ghost Pressure** | PPI produced on plays with **no** official hit/hurry/sack — disruption the box score ignores |
 
-See it in the **⚡ PPI Metric** tab, and as a live badge in the Play Viewer.
-Implementation: [`metrics.py`](metrics.py). Run a quick text demo of the metric
-(no web server needed) with **`python3 demo_ppi.py`**.
+See it in the **⚡ PPI Metric** tab, and — now — **live in the Play Viewer**: a
+real-time pressure gauge rises frame-by-frame while the most dangerous rusher is
+spotlighted with a pulsing ring and a glowing heat-line to the quarterback.
+Implementation: [`metrics.py`](metrics.py).
+
+**Two zero-dependency ways to see the metric without the web app:**
+
+```bash
+python3 demo_ppi.py          # prints the PPI leaderboards in your terminal
+python3 generate_report.py   # writes ppi_report.svg — a shareable infographic
+```
 
 > **Eye-test proof** (first 15 games): the top PPI generators are Aaron Donald,
 > Vita Vea, T.J. Watt, Javon Hargrave, Nick Bosa, Chandler Jones, Trey
@@ -133,6 +143,8 @@ Nfl-Project-Yuki.exe/
 ├── build_exe.py     # builds a standalone Yuki.exe via PyInstaller
 ├── server.py        # stdlib HTTP server: static files + JSON API
 ├── metrics.py       # ⚡ PPI — the original Pocket Pressure Index metric
+├── demo_ppi.py      # terminal demo of the PPI leaderboards
+├── generate_report.py # writes a shareable PPI infographic (ppi_report.svg)
 ├── analytics.py     # all the stat computations (coverage, pressure, teams, plays)
 ├── data_loader.py   # CSV parsing + caching (no pandas)
 ├── config.py        # paths & constants

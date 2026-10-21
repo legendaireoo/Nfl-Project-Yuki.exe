@@ -165,6 +165,101 @@ def play_ppi(game_id: str, play_id: str) -> Optional[dict]:
     return game_ppi(game_id).get(str(play_id))
 
 
+def play_ppi_series(game_id: str, play_id: str) -> Optional[dict]:
+    """Per-frame PPI timeline for the live pressure meter in the Play Viewer.
+
+    Returns, for each frame in the dropback window, the total pressure on the
+    QB and the single most threatening rusher's nflId — so the UI can draw a
+    rising pressure gauge and spotlight the key defender in real time.
+    """
+    rows = dl._tracking_for_game(game_id)
+    if not rows:
+        return None
+    roles = _roles_for_game(game_id).get(str(play_id), {})
+    frames_by_id: Dict[int, List[dict]] = defaultdict(list)
+    for r in rows:
+        if r["playId"] == str(play_id):
+            frames_by_id[to_int(r["frameId"]) or 0].append(r)
+    if not frames_by_id:
+        return None
+
+    snap = end = None
+    for fid in sorted(frames_by_id):
+        for r in frames_by_id[fid]:
+            ev = r.get("event")
+            if ev in SNAP_EVENTS and snap is None:
+                snap = fid
+            if ev in END_EVENTS and end is None and snap is not None:
+                end = fid
+    if snap is None:
+        snap = min(frames_by_id)
+    if end is None:
+        end = max(frames_by_id)
+
+    def qb_at(fid):
+        for r in frames_by_id.get(fid, []):
+            if roles.get(r["nflId"]) == "Pass":
+                x, y = to_float(r["x"]), to_float(r["y"])
+                if x is not None and y is not None:
+                    return x, y
+        return None
+
+    series = []  # one entry per frame index (aligned to the viewer's frames)
+    all_frames = sorted(frames_by_id)
+    peak = 0.0
+    for fid in all_frames:
+        if fid < snap or fid > end:
+            series.append({"pressure": 0.0, "topRusher": None, "active": False})
+            continue
+        qb = qb_at(fid)
+        if not qb:
+            series.append({"pressure": 0.0, "topRusher": None, "active": True})
+            continue
+        frame_pressure = 0.0
+        best_nid = None
+        best_p = 0.0
+        for r in frames_by_id.get(fid, []):
+            if roles.get(r["nflId"]) != "Pass Rush":
+                continue
+            rx, ry = to_float(r["x"]), to_float(r["y"])
+            if rx is None or ry is None:
+                continue
+            d = math.hypot(rx - qb[0], ry - qb[1])
+            if d > MAX_RANGE:
+                continue
+            s = to_float(r["s"]) or 0.0
+            dirdeg = to_float(r["dir"])
+            closing = 0.0
+            if dirdeg is not None:
+                vx = math.sin(math.radians(dirdeg)) * s
+                vy = math.cos(math.radians(dirdeg)) * s
+                tox, toy = qb[0] - rx, qb[1] - ry
+                tl = math.hypot(tox, toy) or 1.0
+                closing = max(0.0, (vx * tox + vy * toy) / tl)
+            p = math.exp(-d / PROX_DECAY) * (1 + closing * CLOSING_WEIGHT)
+            frame_pressure += p
+            if p > best_p:
+                best_p, best_nid = p, r["nflId"]
+        peak = max(peak, frame_pressure)
+        series.append(
+            {"pressure": round(frame_pressure, 3), "topRusher": best_nid, "active": True}
+        )
+
+    # normalise each frame to 0-100 against this play's peak for a clean gauge
+    scale = (1.0 / peak) if peak > 0 else 0.0
+    for s in series:
+        s["gauge"] = round(min(100.0, s["pressure"] * scale * 100), 1)
+
+    summary = game_ppi(game_id).get(str(play_id), {})
+    return {
+        "snapFrame": snap,
+        "endFrame": end,
+        "playPPI": summary.get("ppi"),
+        "timeToThrow": summary.get("timeToThrow"),
+        "series": series,
+    }
+
+
 # ---------------------------------------------------------------------------
 # League-wide aggregates. Computing PPI for all 122 games means reading every
 # tracking file, so this is cached and can be limited to the first N games.

@@ -97,6 +97,37 @@
       const frame = play.frames[frameIdx] || [];
       const possession = play.meta ? play.meta.possessionTeam : null;
 
+      // PPI timeline for this frame (live pressure meter + rusher spotlight)
+      const ppi = play.ppi && play.ppi.series ? play.ppi.series[frameIdx] : null;
+      const topRusher = ppi ? ppi.topRusher : null;
+
+      // Locate the QB + top rusher positions first (for the heat line).
+      let qbPos = null, rusherPos = null;
+      const roleByTeam = {};
+      frame.forEach((p) => {
+        if (p.position === "QB" && possession && p.team === possession && p.x != null) {
+          qbPos = { x: x2px(p.x), y: y2px(p.y) };
+        }
+        if (topRusher && p.nflId === topRusher && p.x != null) {
+          rusherPos = { x: x2px(p.x), y: y2px(p.y) };
+        }
+      });
+
+      // Heat line from the most dangerous rusher to the QB — intensity follows gauge.
+      if (qbPos && rusherPos && ppi && ppi.gauge > 8) {
+        const g = ppi.gauge / 100;
+        ctx.save();
+        ctx.strokeStyle = `rgba(255,${Math.round(180 - g * 150)},60,${0.25 + g * 0.5})`;
+        ctx.lineWidth = 1 + g * 4;
+        ctx.setLineDash([4, 4]);
+        ctx.beginPath();
+        ctx.moveTo(rusherPos.x, rusherPos.y);
+        ctx.lineTo(qbPos.x, qbPos.y);
+        ctx.stroke();
+        ctx.setLineDash([]);
+        ctx.restore();
+      }
+
       let eventText = "";
       frame.forEach((p) => {
         if (p.x == null || p.y == null) return;
@@ -117,6 +148,20 @@
 
         const isOffense = possession && p.team === possession;
         const color = isOffense ? colors.offense : colors.defense;
+        const isTopRusher = topRusher && p.nflId === topRusher;
+
+        // Pulsing threat ring around the most dangerous rusher.
+        if (isTopRusher && ppi && ppi.gauge > 8) {
+          const g = ppi.gauge / 100;
+          const pulse = 12 + 6 * Math.abs(Math.sin(frameIdx / 2));
+          ctx.save();
+          ctx.strokeStyle = `rgba(255,190,70,${0.35 + g * 0.5})`;
+          ctx.lineWidth = 2;
+          ctx.beginPath();
+          ctx.arc(px, py, pulse, 0, Math.PI * 2);
+          ctx.stroke();
+          ctx.restore();
+        }
 
         // direction indicator
         if (p.dir != null) {
@@ -133,8 +178,8 @@
         ctx.arc(px, py, 8, 0, Math.PI * 2);
         ctx.fillStyle = color;
         ctx.fill();
-        ctx.strokeStyle = "rgba(0,0,0,0.5)";
-        ctx.lineWidth = 1;
+        ctx.strokeStyle = isTopRusher ? "#ffbe46" : "rgba(0,0,0,0.5)";
+        ctx.lineWidth = isTopRusher ? 2 : 1;
         ctx.stroke();
 
         ctx.fillStyle = "#fff";
@@ -146,7 +191,7 @@
       });
 
       if (opts.onFrame) {
-        opts.onFrame(frameIdx, play.frameCount, eventText);
+        opts.onFrame(frameIdx, play.frameCount, eventText, ppi ? ppi.gauge : null);
       }
     }
 

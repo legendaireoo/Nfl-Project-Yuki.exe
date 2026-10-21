@@ -279,11 +279,20 @@
     const eventLabel = document.getElementById("eventLabel");
     const playBtn = document.getElementById("playBtn");
 
+    const pmFill = document.getElementById("pmFill");
+    const pmVal = document.getElementById("pmVal");
     viewer = YukiField.makeViewer(fieldCanvas, {
-      onFrame: (i, total, event) => {
+      onFrame: (i, total, event, gauge) => {
         slider.value = i;
         frameLabel.textContent = `frame ${i + 1} / ${total}`;
         eventLabel.textContent = event ? "● " + event : "";
+        if (gauge != null) {
+          const g = Math.round(gauge);
+          pmFill.style.width = g + "%";
+          pmFill.style.background =
+            g >= 66 ? "#ff6b6b" : g >= 33 ? "#ffbf47" : "#37d6a0";
+          pmVal.textContent = g;
+        }
       },
       onEnd: () => { playBtn.textContent = "▶ Play"; },
     });

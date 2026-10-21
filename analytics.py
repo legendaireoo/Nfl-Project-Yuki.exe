@@ -338,12 +338,23 @@ def play_detail(game_id: str, play_id: str) -> Dict:
     home = g.get("homeTeamAbbr", "")
     visitor = g.get("visitorTeamAbbr", "")
 
+    # Attach the per-frame PPI timeline so the viewer can show a live pressure
+    # meter and spotlight the top rusher. Imported lazily to avoid a cycle.
+    ppi_series = None
+    try:
+        import metrics
+
+        ppi_series = metrics.play_ppi_series(game_id, play_id)
+    except Exception:
+        ppi_series = None
+
     return {
         "gameId": game_id,
         "playId": play_id,
         "home": home,
         "visitor": visitor,
         "playDirection": direction,
+        "ppi": ppi_series,
         "meta": {
             "description": meta.get("playDescription") if meta else "",
             "quarter": meta.get("quarter") if meta else "",
