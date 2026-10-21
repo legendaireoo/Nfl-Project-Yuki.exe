@@ -1,0 +1,28 @@
+Pass plays (C/I/IN) in plays.csv: 7565; with snap+release in tracking: 7541
+Route-runner rows: 34845; targeted throws matched to exactly one route runner: 7221 (122 games, max 87 per game)
+
+Completion by PROW bucket (k=3 yd):
+                  bucket    n  rate    lo    hi
+0 s (covered at release) 3261 0.473 0.456 0.490
+               0.1-0.5 s  878 0.773 0.744 0.800
+               0.6-1.0 s  966 0.782 0.754 0.806
+               1.1-2.0 s 1123 0.773 0.748 0.796
+                   > 2 s  993 0.721 0.692 0.748
+Open at release 76.2% (n=3960) vs covered 47.3% (n=3261): +28.9 pts, game-bootstrap 95% CI [26.8, 31.1]
+Among open targets: window > 1 s 74.9% (n=2116) vs fresh <= 0.5 s 77.3% (n=878): diff -2.5 pts, 95% CI [-5.7, 0.9]
+Logit (game-clustered SE) complete ~ sep_release: sep_release=+0.320 (p=7.49e-95)
+Logit (game-clustered SE) complete ~ sep_release + prow_3 + depth_release + time_to_throw: sep_release=+0.290 (p=2.24e-51), prow_3=-0.019 (p=0.621), depth_release=-0.048 (p=8.32e-21), time_to_throw=-0.145 (p=2.45e-06)
+
+Sensitivity (open at release vs covered, all k):
+  k=2: open 72.3% (n=5132), covered 40.7% (n=2089)
+  k=3: open 76.2% (n=3960), covered 47.3% (n=3261)
+  k=4: open 78.0% (n=2871), covered 53.4% (n=4350)
+  k=5: open 80.3% (n=1935), covered 56.9% (n=5286)
+
+Missed windows (target < 3 yd at release, teammate open >= 1 s): 23.9% of throws (n=1727), game-bootstrap 95% CI [22.9%, 24.9%]
+  completion on those throws 48.2%; open teammate median depth 4.3 yd past LOS, 78% downfield; median separation 4.8 yd
+  by coverage: Man 24.0% (n=2078), Other 20.3% (n=375), Zone 24.2% (n=4768)
+Route runners open >= 0.5 s at some point but covered at release: 34.4%
+
+QB table (n>=150 throws): 27 QBs, missed-window rate range 18.2%-30.5%
+Play Lab example: gameId=2021103103 playId=1010 target sep 0.9 yd, teammate Diontae Johnson PROW 3.5 s
