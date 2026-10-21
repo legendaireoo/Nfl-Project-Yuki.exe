@@ -18,6 +18,7 @@ from urllib.parse import parse_qs, urlparse
 
 import analytics
 import config
+import metrics
 
 STATIC_TYPES = {
     ".html": "text/html; charset=utf-8",
@@ -105,6 +106,21 @@ class Handler(BaseHTTPRequestHandler):
         elif path == "/api/player-search":
             q = qs.get("q", [""])[0]
             self._send_json(analytics.player_search(q))
+        elif path == "/api/ppi":
+            n = qs.get("games", ["20"])[0]
+            try:
+                n = max(1, min(122, int(n)))
+            except ValueError:
+                n = 20
+            self._send_json(metrics.leaderboard(n))
+        elif path == "/api/ppi-play":
+            game_id = qs.get("gameId", [None])[0]
+            play_id = qs.get("playId", [None])[0]
+            if not game_id or not play_id:
+                self._send_json({"error": "gameId and playId required"}, 400)
+                return
+            res = metrics.play_ppi(game_id, play_id)
+            self._send_json(res if res else {"error": "not a dropback / no PPI"})
         else:
             self._send_json({"error": "unknown endpoint"}, 404)
 

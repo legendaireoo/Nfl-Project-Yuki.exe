@@ -130,3 +130,22 @@ select {
 .loading { color: var(--muted); font-size: 13px; padding: 20px 0; }
 .legend { display: flex; gap: 16px; flex-wrap: wrap; font-size: 12px; color: var(--muted); margin-top: 8px; }
 .legend .dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 6px; vertical-align: middle; }
+
+/* PPI metric view */
+.ppi-tab.active { background: linear-gradient(135deg, #ffbf47, #ff8a3d); border-color: #ffbf47; color: #1a1205; }
+.ppi-tab { color: #ffd98a; }
+.ppi-hero { border-color: #3a3418; background: linear-gradient(160deg, #161b27, #1d1a12); }
+.badge {
+  font-size: 10.5px; text-transform: uppercase; letter-spacing: 0.6px;
+  background: #ffbf47; color: #1a1205; padding: 3px 8px; border-radius: 999px;
+  vertical-align: middle; margin-left: 8px; font-weight: 700;
+}
+.sub { font-size: 12px; color: var(--muted); font-weight: 400; }
+.ppi-controls { display: flex; align-items: center; gap: 18px; flex-wrap: wrap; margin: 6px 0 14px; }
+.ppi-controls label { display: flex; flex-direction: column; gap: 5px; font-size: 12px; color: var(--muted); }
+.goplay { color: var(--accent); text-decoration: none; font-weight: 600; }
+.goplay:hover { text-decoration: underline; }
+.ppi-hero em { color: #ffd98a; font-style: normal; }
+
+.ppi-badge { font-size: 14px; margin-bottom: 8px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.ppi-badge strong { font-size: 18px; }

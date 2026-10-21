@@ -29,6 +29,7 @@
     else if (view === "rush") loadRush();
     else if (view === "block") loadBlock();
     else if (view === "teams") loadTeams();
+    else if (view === "ppi") loadPPI();
     else if (view === "viewer") loadViewer();
   }
 
@@ -192,6 +193,83 @@
       `<thead><tr><th>Team</th><th class="num">Rush Snaps</th><th class="num">Pressures</th><th class="num">Pass-Rush Rate</th><th class="num">Block Snaps</th><th class="num">Pressures All.</th><th class="num">Pressure-All. Rate</th></tr></thead><tbody>${rows}</tbody>`;
   }
 
+  // ---- PPI (original metric) -------------------------------------------
+  function loadPPI() {
+    const sel = document.getElementById("ppiGames");
+    sel.addEventListener("change", () => fetchPPI(sel.value));
+    fetchPPI(sel.value);
+  }
+  function fetchPPI(games) {
+    const status = document.getElementById("ppiStatus");
+    status.textContent = `Computing PPI across ${games} game(s) from raw tracking…`;
+    api(`/api/ppi?games=${games}`).then((d) => {
+      cache.ppi = d;
+      status.textContent = `✓ ${d.playsScored.toLocaleString()} dropbacks scored across ${d.gamesAnalyzed} games · league avg PPI ${d.avgPPI}`;
+      drawPPI(d);
+    });
+  }
+  function drawPPI(d) {
+    const cards = [
+      { label: "Games Analyzed", value: d.gamesAnalyzed },
+      { label: "Dropbacks Scored", value: d.playsScored.toLocaleString() },
+      { label: "League Avg PPI", value: d.avgPPI, cls: "accent" },
+      { label: "Top PPI Rusher", value: (d.rushers[0] || {}).name || "—", cls: "warn" },
+    ];
+    document.getElementById("ppiCards").innerHTML = cards
+      .map((c) => `<div class="card ${c.cls || ""}"><div class="value" style="font-size:${String(c.value).length > 10 ? 18 : 26}px">${c.value}</div><div class="label">${c.label}</div></div>`)
+      .join("");
+
+    const maxPPI = Math.max(...d.rushers.map((r) => r.totalPPI), 1);
+    document.getElementById("ppiRushTable").innerHTML =
+      `<thead><tr><th>#</th><th>Player</th><th>Pos</th><th class="num">Plays</th><th class="num">Total PPI</th><th class="num">PPI/Play</th></tr></thead><tbody>` +
+      d.rushers.slice(0, 25).map((r, i) => `<tr>
+        <td class="rank">${i + 1}</td><td>${r.name}</td><td>${r.position}</td>
+        <td class="num">${r.plays}</td>
+        <td class="num bar-cell"><div class="bar" style="width:${(r.totalPPI / maxPPI) * 100}%"></div><span>${r.totalPPI}</span></td>
+        <td class="num">${r.ppiPerPlay}</td></tr>`).join("") +
+      `</tbody>`;
+
+    document.getElementById("ppiGhostTable").innerHTML =
+      `<thead><tr><th>#</th><th>Player</th><th>Pos</th><th class="num">Ghost PPI</th><th class="num">Unrewarded Plays</th></tr></thead><tbody>` +
+      d.ghostLeaders.slice(0, 15).map((r, i) => `<tr>
+        <td class="rank">${i + 1}</td><td>${r.name}</td><td>${r.position}</td>
+        <td class="num">${r.ghostPPI}</td><td class="num">${r.ghostPlays}</td></tr>`).join("") +
+      `</tbody>`;
+
+    C.bar(document.getElementById("ppiDefChart"),
+      d.teamsDefense.slice(0, 12).map((t) => ({ label: t.team, value: t.avgPPI })),
+      { horizontal: true, color: C.PALETTE[3] });
+    C.bar(document.getElementById("ppiOffChart"),
+      d.teamsOffense.slice(0, 12).map((t) => ({ label: t.team, value: t.avgPPI })),
+      { horizontal: true, color: C.PALETTE[1] });
+
+    document.getElementById("ppiPlaysTable").innerHTML =
+      `<thead><tr><th>#</th><th class="num">PPI</th><th class="num">Time to Throw</th><th>Defense</th><th>Offense</th><th></th></tr></thead><tbody>` +
+      d.topPlays.slice(0, 15).map((p, i) => `<tr>
+        <td class="rank">${i + 1}</td><td class="num"><strong>${p.ppi}</strong></td>
+        <td class="num">${p.timeToThrow}s</td><td>${p.def}</td><td>${p.off}</td>
+        <td><a href="#" class="goplay" data-game="${p.gameId}" data-play="${p.playId}">▶ watch</a></td></tr>`).join("") +
+      `</tbody>`;
+
+    document.querySelectorAll(".goplay").forEach((a) => {
+      a.addEventListener("click", (e) => {
+        e.preventDefault();
+        jumpToPlay(a.dataset.game, a.dataset.play);
+      });
+    });
+  }
+
+  function jumpToPlay(gameId, playId) {
+    document.querySelector('.tab[data-view="viewer"]').click();
+    const gSel = document.getElementById("gameSelect");
+    const apply = () => {
+      gSel.value = gameId;
+      loadPlays(gameId, playId);
+    };
+    if (gSel.options.length) apply();
+    else setTimeout(apply, 600);
+  }
+
   // ---- PLAY VIEWER ------------------------------------------------------
   let viewer;
   function loadViewer() {
@@ -244,7 +322,7 @@
     });
   }
 
-  function loadPlays(gameId) {
+  function loadPlays(gameId, targetPlayId) {
     const pSel = document.getElementById("playSelect");
     pSel.innerHTML = `<option>Loading…</option>`;
     api(`/api/plays?gameId=${gameId}`).then((plays) => {
@@ -254,12 +332,28 @@
           return `<option value="${p.playId}">Q${p.quarter} ${p.down}&amp;${p.yardsToGo} [${p.coverage}] ${desc}</option>`;
         })
         .join("");
-      if (plays.length) loadPlay(gameId, plays[0].playId);
+      if (!plays.length) return;
+      const target = targetPlayId && plays.some((p) => p.playId == targetPlayId)
+        ? String(targetPlayId) : plays[0].playId;
+      pSel.value = target;
+      loadPlay(gameId, target);
     });
   }
 
   function loadPlay(gameId, playId) {
     document.getElementById("playDesc").textContent = "Loading play…";
+    // fetch PPI for this play in parallel and show it as a badge
+    api(`/api/ppi-play?gameId=${gameId}&playId=${playId}`).then((ppi) => {
+      const el = document.getElementById("ppiBadge");
+      if (el) {
+        if (ppi && ppi.ppi != null) {
+          const color = ppi.ppi >= 60 ? "#ff6b6b" : ppi.ppi >= 40 ? "#ffbf47" : "#37d6a0";
+          el.innerHTML = `⚡ PPI <strong style="color:${color}">${ppi.ppi}</strong> · throw in ${ppi.timeToThrow}s`;
+        } else {
+          el.textContent = "";
+        }
+      }
+    });
     api(`/api/play?gameId=${gameId}&playId=${playId}`).then((play) => {
       const m = play.meta || {};
       document.getElementById("playDesc").innerHTML =

@@ -46,6 +46,7 @@ def build() -> None:
         f"config.py{SEP}.",
         f"server.py{SEP}.",
         f"analytics.py{SEP}.",
+        f"metrics.py{SEP}.",
         f"data_loader.py{SEP}.",
     ]
 
@@ -62,6 +63,7 @@ def build() -> None:
         "--hidden-import", "config",
         "--hidden-import", "server",
         "--hidden-import", "analytics",
+        "--hidden-import", "metrics",
         "--hidden-import", "data_loader",
     ]
     for spec in add_data:

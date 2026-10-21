@@ -21,6 +21,7 @@
       <button class="tab" data-view="rush">Pass Rush</button>
       <button class="tab" data-view="block">Pass Block</button>
       <button class="tab" data-view="teams">Teams</button>
+      <button class="tab ppi-tab" data-view="ppi">⚡ PPI Metric</button>
       <button class="tab" data-view="viewer">Play Viewer</button>
     </nav>
   </header>
@@ -83,6 +84,62 @@
       </div>
     </section>
 
+    <!-- PPI METRIC (original stat) -->
+    <section class="view" id="view-ppi">
+      <div class="panel ppi-hero">
+        <h3>⚡ PPI — Pocket Pressure Index <span class="badge">original metric</span></h3>
+        <p class="hint">
+          PFF only tells you <em>whether</em> a QB was hit, hurried or sacked — a yes/no flag.
+          <strong>PPI measures how much heat the quarterback actually felt</strong>, as a continuous
+          0–100 score built entirely from the frame-by-frame tracking between the snap and the throw:
+          rusher <strong>proximity</strong> (weighted exponentially), <strong>closing speed</strong>
+          (velocity aimed at the QB), and pocket <strong>urgency</strong> (time-to-throw).
+        </p>
+        <div class="ppi-controls">
+          <label>Games analyzed
+            <select id="ppiGames">
+              <option value="10">First 10 (fast)</option>
+              <option value="20" selected>First 20</option>
+              <option value="40">First 40</option>
+              <option value="122">All 122 (slow)</option>
+            </select>
+          </label>
+          <span class="loading" id="ppiStatus"></span>
+        </div>
+        <div class="cards" id="ppiCards"></div>
+      </div>
+
+      <div class="grid-2">
+        <div class="panel">
+          <h3>Top PPI Generators <span class="sub">pass rushers</span></h3>
+          <p class="hint">Continuous pressure production — richer than counting binary hurries.</p>
+          <div class="table-wrap"><table id="ppiRushTable"></table></div>
+        </div>
+        <div class="panel">
+          <h3>👻 Ghost Pressure <span class="sub">box score misses this</span></h3>
+          <p class="hint">PPI generated on plays where PFF logged <em>no</em> official hit/hurry/sack — disruption the stat sheet ignores.</p>
+          <div class="table-wrap"><table id="ppiGhostTable"></table></div>
+        </div>
+      </div>
+
+      <div class="grid-2">
+        <div class="panel">
+          <h3>Most Pressuring Defenses</h3>
+          <canvas class="chart" id="ppiDefChart" height="300"></canvas>
+        </div>
+        <div class="panel">
+          <h3>Best-Protected Offenses</h3>
+          <canvas class="chart" id="ppiOffChart" height="300"></canvas>
+        </div>
+      </div>
+
+      <div class="panel">
+        <h3>Highest-Pressure Plays</h3>
+        <p class="hint">Click a play to watch it in the Play Viewer.</p>
+        <div class="table-wrap"><table id="ppiPlaysTable"></table></div>
+      </div>
+    </section>
+
     <!-- PLAY VIEWER -->
     <section class="view" id="view-viewer">
       <div class="panel">
@@ -95,6 +152,7 @@
             <select id="playSelect"></select>
           </label>
         </div>
+        <div class="ppi-badge" id="ppiBadge"></div>
         <div class="play-desc" id="playDesc">Select a game and play to animate the tracking data.</div>
         <div class="field-wrap">
           <canvas id="field" width="1000" height="470"></canvas>

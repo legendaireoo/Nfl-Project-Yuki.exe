@@ -1,12 +1,51 @@
 # 🏈 Yuki.exe — NFL Big Data Bowl Analytics
 
-An interactive web app to **analyze the NFL Big Data Bowl (regional event) dataset** —
-pass-rush production, pass protection, defensive coverages, team trends, and a
-frame-by-frame **play animation viewer** built straight from the player-tracking data.
+> **README (the short version — what this is, what it reveals, who'd use it):**
+>
+> Yuki.exe is an interactive dashboard that turns the NFL Big Data Bowl player-tracking
+> data into pass-rush, pass-protection and coverage insight, including a frame-by-frame
+> play animation. Its headline feature is an **original invented metric — PPI, the Pocket
+> Pressure Index** — which reads the geometry between the snap and the throw (rusher
+> proximity, closing speed, and time-to-throw) to score, on a 0–100 scale, *how much heat
+> a quarterback actually felt* — not just the binary hit/hurry/sack flag PFF records. PPI
+> reveals **"Ghost Pressure"**: disruptive rushers (e.g. Nick Bosa, Daron Payne) who
+> consistently collapse the pocket on plays the box score credits to nobody. A **defensive
+> coordinator** would use it to find under-valued pass rushers and grade protection
+> schemes; a **scout** to spot players whose impact the stat sheet misses; a **broadcaster**
+> to quantify "that QB was under siege all night" with a real number.
 
 Data source:
 [ThompsonJamesBliss/nfl-big-data-bowl-regional-event-data](https://github.com/ThompsonJamesBliss/nfl-big-data-bowl-regional-event-data)
 (tracking by NFL Next Gen Stats, scouting by PFF).
+
+## ⚡ The original metric: PPI (Pocket Pressure Index)
+
+PFF's data only says *whether* a QB was hit, hurried or sacked — a yes/no flag. **PPI measures
+how much pressure the QB actually faced**, as a continuous 0–100 score computed purely from the
+tracking frames between `ball_snap` and `pass_forward`. For every frame, each pass rusher is
+scored from three physical ingredients:
+
+- **Proximity** — distance to the QB, weighted exponentially (2 yds ≫ 6 yds).
+- **Closing speed** — the part of the rusher's velocity vector aimed *at* the QB.
+- **Urgency** — how fast the pocket broke down (time-to-throw).
+
+The peak-frame pressure sets the play's PPI, and each rusher's share is credited back to them.
+This yields three things the official stats can't:
+
+| Output | Meaning |
+|--------|---------|
+| **PPI / play** | Continuous pressure intensity, richer than counting binary hurries |
+| **PPI generated** | A pass-rush productivity score per defender (T.J. Watt, Bosa, Hargrave top it — the metric passes the eye test) |
+| **👻 Ghost Pressure** | PPI produced on plays with **no** official hit/hurry/sack — disruption the box score ignores |
+
+See it in the **⚡ PPI Metric** tab, and as a live badge in the Play Viewer.
+Implementation: [`metrics.py`](metrics.py). Run a quick text demo of the metric
+(no web server needed) with **`python3 demo_ppi.py`**.
+
+> **Eye-test proof** (first 15 games): the top PPI generators are Aaron Donald,
+> Vita Vea, T.J. Watt, Javon Hargrave, Nick Bosa, Chandler Jones, Trey
+> Hendrickson — i.e. the league's genuinely elite rushers. Ghost-Pressure #1 is
+> Aaron Donald, whose disruption routinely doesn't show up as a sack.
 
 ## ✨ Why it's special
 
@@ -24,7 +63,8 @@ you can run it.
 | **Pass Rush** | Leaderboard of top disruptors — hits, hurries, sacks, total pressures & pressure rate |
 | **Pass Block** | Best protectors — lowest pressure-allowed rate (min. 50 snaps) |
 | **Teams** | Scatter of team pass-rush rate vs. pressure-allowed rate, with full table |
-| **Play Viewer** | Pick any game + play and **animate the tracking data** on a football field — players colored by offense/defense, ball, direction arrows, line of scrimmage, and live event tags (snap, pass release, tackle…) |
+| **⚡ PPI Metric** | The original stat: PPI leaderboards (generators + Ghost Pressure), most-pressuring defenses / best-protected offenses, and the highest-PPI plays (click to watch) |
+| **Play Viewer** | Pick any game + play and **animate the tracking data** on a football field — players colored by offense/defense, ball, direction arrows, line of scrimmage, live event tags, and a **live PPI badge** |
 
 ## 🚀 Running it
 
@@ -92,6 +132,7 @@ Nfl-Project-Yuki.exe/
 ├── start-yuki.sh    # macOS / Linux launcher
 ├── build_exe.py     # builds a standalone Yuki.exe via PyInstaller
 ├── server.py        # stdlib HTTP server: static files + JSON API
+├── metrics.py       # ⚡ PPI — the original Pocket Pressure Index metric
 ├── analytics.py     # all the stat computations (coverage, pressure, teams, plays)
 ├── data_loader.py   # CSV parsing + caching (no pandas)
 ├── config.py        # paths & constants
@@ -112,6 +153,8 @@ Nfl-Project-Yuki.exe/
 | `GET /api/pass-rush` | Pass-rush leaderboard |
 | `GET /api/pass-block` | Pass-protection leaderboard |
 | `GET /api/teams` | Team rush vs. protection |
+| `GET /api/ppi?games=N` | ⚡ PPI leaderboards (rushers, ghost pressure, teams, top plays) |
+| `GET /api/ppi-play?gameId=…&playId=…` | PPI score + rusher breakdown for one play |
 | `GET /api/games` | Games that have tracking data |
 | `GET /api/plays?gameId=…` | Plays for a game |
 | `GET /api/play?gameId=…&playId=…` | Frame-by-frame tracking for one play |
