@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Yuki.exe — Demo Video Generator</title>
+<style>
+  body{background:#05070c;color:#e6edf6;font-family:"Segoe UI",system-ui,sans-serif;
+    display:flex;flex-direction:column;align-items:center;gap:16px;padding:20px;min-height:100vh}
+  h2{font-weight:700}
+  .bar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;justify-content:center}
+  button{background:#4f9dff;color:#fff;border:0;border-radius:9px;padding:12px 22px;font-size:15px;font-weight:700;cursor:pointer}
+  button.rec{background:#ff6b6b}
+  button:disabled{opacity:.5;cursor:default}
+  .note{color:#8c9bb3;font-size:13px;max-width:900px;text-align:center;line-height:1.5}
+  canvas{border-radius:14px;box-shadow:0 20px 60px rgba(0,0,0,.5);max-width:100%;height:auto;background:#0b0f17}
+  #status{color:#37d6a0;font-size:13px;min-height:18px}
+  a.dl{color:#4f9dff}
+</style>
+</head>
+<body>
+  <h2>🏈 Yuki.exe — Demo Video</h2>
+  <div class="bar">
+    <button id="play">▶ Play preview</button>
+    <button id="rec" class="rec">⏺ Generate .webm video</button>
+  </div>
+  <div id="status"></div>
+  <canvas id="c" width="1280" height="720"></canvas>
+  <div class="note">
+    Click <b>Generate .webm video</b> — the whole demo is drawn on this canvas and recorded
+    automatically (no screen-share popup). A <b>yuki-demo.webm</b> file downloads when it's done
+    (~32&nbsp;s). Open it in any player, or re-encode to MP4 if needed. Everything runs offline.
+  </div>
+
+<script>
+const C=document.getElementById("c"),X=C.getContext("2d"),W=1280,H=720;
+const COL={bg:"#0b0f17",panel:"#141b27",panel2:"#1b2433",border:"#243044",text:"#e6edf6",
+  muted:"#8c9bb3",accent:"#4f9dff",accent2:"#37d6a0",danger:"#ff6b6b",warn:"#ffbf47",
+  gold:"#ffd98a",cyan:"#45c2d9",purple:"#b78bff",green:"#7ee787"};
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+function rr(x,y,w,h,r){X.beginPath();X.moveTo(x+r,y);X.arcTo(x+w,y,x+w,y+h,r);X.arcTo(x+w,y+h,x,y+h,r);
+  X.arcTo(x,y+h,x,y,r);X.arcTo(x,y,x+w,y,r);X.closePath();}
+
+// ---- persistent chrome (header + tabs) ----
+const TABS=[["Overview","#4f9dff"],["🔥 Pressure Meter","#ffbf47"],["🎯 Throwing Window","#45c2d9"],
+  ["🎮 Guess the Pressure","#b78bff"],["🛡️ Pocket Watch","#7ee787"],["🎬 Play Viewer","#4f9dff"]];
+function drawChrome(activeIdx){
+  X.fillStyle=COL.bg;X.fillRect(0,0,W,H);
+  // soft glow
+  const g=X.createRadialGradient(W*.8,-60,0,W*.8,-60,900);g.addColorStop(0,"#16233b");g.addColorStop(1,COL.bg);
+  X.fillStyle=g;X.fillRect(0,0,W,H);
+  // header
+  X.fillStyle="rgba(10,14,22,.85)";X.fillRect(0,0,W,78);
+  X.strokeStyle=COL.border;X.beginPath();X.moveTo(0,78);X.lineTo(W,78);X.stroke();
+  X.font="34px sans-serif";X.textAlign="left";X.fillText("🏈",28,52);
+  X.fillStyle=COL.text;X.font="bold 26px sans-serif";X.fillText("Yuki",76,50);
+  X.fillStyle=COL.accent;X.font="bold 26px sans-serif";X.fillText(".exe",140,50);
+  X.fillStyle=COL.muted;X.font="13px sans-serif";X.fillText("Who sets the quarterback on fire? The fun NFL lab.",76,66);
+  // tabs
+  let tx=28;X.font="14px sans-serif";
+  TABS.forEach((t,i)=>{const w=X.measureText(t[0]).width+26;
+    if(i===activeIdx){X.fillStyle=t[1];rr(tx,94,w,30,15);X.fill();X.fillStyle="#06121f";}
+    else{X.fillStyle=COL.muted;}
+    X.textAlign="left";X.fillText(t[0],tx+13,114);tx+=w+7;});
+}
+function caption(t){
+  X.fillStyle="rgba(0,0,0,.55)";X.fillRect(0,H-70,W,70);
+  X.fillStyle="#fff";X.font="bold 22px sans-serif";X.textAlign="center";X.fillText(t,W/2,H-30);
+}
+function progress(p){X.fillStyle=COL.accent;X.fillRect(0,0,W*p,4);}
+
+// ---- scene renderers (take a 0..1 anim t) ----
+function card(x,y,w,h,val,lbl,color){
+  X.fillStyle=COL.panel2;rr(x,y,w,h,12);X.fill();X.strokeStyle=COL.border;X.stroke();
+  X.fillStyle=color||COL.text;X.font="bold 34px sans-serif";X.textAlign="left";X.fillText(val,x+20,y+48);
+  X.fillStyle=COL.muted;X.font="13px sans-serif";X.fillText(lbl,x+20,y+72);
+}
+function sceneOverview(t){
+  drawChrome(0);
+  const cards=[["122","🏟️ Games",COL.text],["8,557","🎯 Plays",COL.text],
+    ["61.1%","✅ Completions",COL.accent2],["4,322","💥 Pressures",COL.danger]];
+  const cw=288,gap=16,x0=28,y=150;
+  cards.forEach((c,i)=>{if(t*4>i)card(x0+i*(cw+gap),y,cw,96,c[0],c[1],c[2]);});
+  X.fillStyle=COL.text;X.font="bold 22px sans-serif";X.textAlign="left";
+  X.fillText("⚡ 3 original metrics · 2 mini-games · live replay",28,300);
+  X.fillStyle=COL.muted;X.font="15px sans-serif";
+  X.fillText("Turning raw NFL player-tracking into pressure, coverage & pocket insight.",28,330);
+  X.fillText("Built from scratch — zero dependencies, runs offline.",28,354);
+  const sc=["😎 Chilling","🙂 Manageable","😬 Hot","🔥 Blazing","💀 Inferno"];
+  let sx=28;X.font="14px sans-serif";
+  sc.forEach((s,i)=>{if(t*6>i+1){const w=X.measureText(s).width+20;X.fillStyle=COL.panel2;rr(sx,400,w,30,15);X.fill();
+    X.strokeStyle=COL.border;X.stroke();X.fillStyle=COL.text;X.textAlign="left";X.fillText(s,sx+10,420);sx+=w+8;}});
+}
+const RUSH=[["🥇","Vita Vea","NT",529.8,"👹 The Nightmare"],["🥈","Javon Hargrave","DT",508.6,"🌋 The Volcano"],
+  ["🥉","T.J. Watt","OLB",501.1,"⚡ The Lightning"],["#4","Arik Armstead","DE",480.6,"🛠️ The Grinder"],
+  ["#5","Nick Bosa","DE",470.4,"👻 The Ghost"],["#6","Shaquil Barrett","OLB",449.6,"⚡ The Lightning"]];
+function scenePPI(t){
+  drawChrome(1);
+  X.fillStyle=COL.text;X.font="bold 20px sans-serif";X.textAlign="left";
+  X.fillText("🔥 The Pressure Meter — who brings the most heat?",28,160);
+  X.fillStyle=COL.muted;X.font="13px sans-serif";
+  X.fillText("A 0–100 score from the tracking geometry (how close & fast rushers reach the QB).",28,184);
+  RUSH.forEach((r,i)=>{const appear=Math.min(1,Math.max(0,t*7-i));if(appear<=0)return;
+    const y=205+i*72;X.globalAlpha=appear;
+    X.fillStyle=COL.panel2;rr(28,y,1224,60,10);X.fill();X.strokeStyle=COL.border;X.stroke();
+    X.fillStyle=COL.text;X.font="bold 20px sans-serif";X.textAlign="left";X.fillText(r[0],44,y+38);
+    X.font="bold 16px sans-serif";X.fillText(r[1],90,y+30);
+    X.fillStyle=COL.muted;X.font="12px sans-serif";X.fillText(r[2],90,y+48);
+    // bar
+    const bw=440*(r[3]/529.8)*appear;X.fillStyle=COL.panel;rr(320,y+22,440,16,8);X.fill();
+    const grd=X.createLinearGradient(320,0,760,0);grd.addColorStop(0,COL.warn);grd.addColorStop(1,COL.danger);
+    X.fillStyle=grd;rr(320,y+22,bw,16,8);X.fill();
+    X.fillStyle=COL.text;X.font="13px sans-serif";X.fillText(r[3].toFixed(0),770,y+35);
+    X.fillStyle=COL.gold;X.font="bold 14px sans-serif";X.textAlign="right";X.fillText(r[4],1236,y+37);
+    X.globalAlpha=1;});
+}
+const PROW=[["😶 Covered at release",47,COL.danger],["⚡ 0.1–0.5 s",77,COL.accent2],
+  ["🙂 0.6–1.0 s",78,COL.accent2],["👍 1.1–2.0 s",77,COL.accent2],["🕰️ > 2 s",72,COL.accent2]];
+function sceneProw(t){
+  drawChrome(2);
+  X.fillStyle=COL.text;X.font="bold 20px sans-serif";X.textAlign="left";
+  X.fillText("🎯 Throwing Window — open AT the throw matters, duration doesn't 🤯",28,160);
+  X.fillStyle=COL.muted;X.font="13px sans-serif";
+  X.fillText("Completion rate of the targeted receiver by how long his window had been open:",28,184);
+  PROW.forEach((p,i)=>{const y=225+i*80;const full=620*(p[1]/100);const bw=full*Math.min(1,t*1.6);
+    X.fillStyle=COL.text;X.font="15px sans-serif";X.textAlign="left";X.fillText(p[0],28,y+30);
+    X.fillStyle=COL.panel;rr(300,y+10,620,34,8);X.fill();
+    X.fillStyle=p[2];rr(300,y+10,bw,34,8);X.fill();
+    X.fillStyle=COL.text;X.font="bold 16px sans-serif";X.fillText(p[1]+"%",310+full,y+33);});
+  if(t>.7){X.fillStyle=COL.gold;X.font="italic 15px sans-serif";X.textAlign="center";
+    X.fillText("+29 points if open — but an older window is NOT a better window.",W/2,H-90);}
+}
+// field animation shared by game + viewer
+function makePlay(){const qb={x:860,y:360};const P=[{x:860,y:360,off:1,n:"12"}];
+  for(let i=0;i<5;i++)P.push({x:770,y:230+i*65,off:1,n:""});
+  P.push({x:600,y:210,off:1,n:"13"},{x:540,y:520,off:1,n:"10"});
+  const rush=[{x:720,y:210,n:"99"},{x:720,y:300,n:"90"},{x:720,y:400,n:"55"},{x:720,y:500,n:"91"}];
+  rush.forEach(r=>P.push({...r,off:0,rush:1}));P.push({x:860,y:360,ball:1});
+  return {qb,P,start:P.map(p=>({...p}))};}
+function drawFieldArea(play,t,y0,hh){
+  const {qb,P,start}=play;const x0=28,w=1224;
+  X.fillStyle="#1f6b35";rr(x0,y0,w,hh,10);X.fill();
+  X.save();rr(x0,y0,w,hh,10);X.clip();
+  X.strokeStyle="rgba(255,255,255,.4)";X.lineWidth=1;
+  for(let i=1;i<14;i++){X.beginPath();X.moveTo(x0+w*i/14,y0);X.lineTo(x0+w*i/14,y0+hh);X.stroke();}
+  // move rushers toward QB
+  P.forEach((p,i)=>{if(p.rush){const s=start[i];p.x=s.x+(qb.x-40-s.x)*t*.95;p.y=s.y+(qb.y-s.y)*t*.5;}});
+  let top=null,md=1e9;P.forEach(p=>{if(p.rush){const d=Math.hypot(p.x-qb.x,p.y-qb.y);if(d<md){md=d;top=p;}}});
+  const gauge=Math.min(100,Math.max(0,(140-md)/120*100))*Math.min(1,t*1.1);
+  if(top&&gauge>8){const g=gauge/100;X.strokeStyle=`rgba(255,${(180-g*150)|0},60,${.3+g*.5})`;
+    X.lineWidth=1+g*5;X.setLineDash([5,5]);X.beginPath();X.moveTo(top.x,top.y);X.lineTo(qb.x,qb.y);X.stroke();X.setLineDash([]);
+    X.strokeStyle=`rgba(255,190,70,${.4+g*.5})`;X.lineWidth=3;X.beginPath();X.arc(top.x,top.y,16+5*Math.sin(t*20),0,7);X.stroke();}
+  P.forEach(p=>{X.beginPath();X.arc(p.x,p.y,11,0,7);
+    X.fillStyle=p.ball?"#8a5a28":(p.off?COL.accent:COL.danger);X.fill();
+    X.strokeStyle=p===top?"#ffbe46":"rgba(0,0,0,.5)";X.lineWidth=p===top?3:1;X.stroke();
+    if(!p.ball){X.fillStyle="#fff";X.font="bold 11px sans-serif";X.textAlign="center";X.textBaseline="middle";
+      X.fillText(p.n||"",p.x,p.y);X.textBaseline="alphabetic";}});
+  X.restore();return gauge;
+}
+let gamePlay=makePlay();
+function sceneGame(t){
+  drawChrome(3);
+  X.fillStyle=COL.text;X.font="bold 20px sans-serif";X.textAlign="left";X.fillText("🎮 Guess the Pressure!",28,155);
+  X.fillStyle=COL.text;X.font="bold 15px sans-serif";X.textAlign="center";X.fillText("Score: 5 / 3 · Streak: 4 🔥",W/2,150);
+  drawFieldArea(gamePlay,Math.min(1,t*1.2),175,330);
+  // choices
+  const ch=["😎 Chilling","🙂 Manageable","😬 Hot","🔥 Blazing","💀 Inferno"];let cx=250;
+  X.font="14px sans-serif";
+  ch.forEach((c,i)=>{const w=X.measureText(c).width+28;const reveal=t>.85;
+    X.fillStyle=reveal&&i===4?"#1f7a4d":COL.panel2;rr(cx,540,w,38,9);X.fill();
+    X.strokeStyle=reveal&&i===4?COL.accent2:COL.border;X.stroke();
+    X.fillStyle=COL.text;X.textAlign="left";X.fillText(c,cx+14,564);cx+=w+10;});
+  if(t>.9){X.fillStyle=COL.accent2;X.font="bold 15px sans-serif";X.textAlign="center";
+    X.fillText("🎉 Perfect! It was 💀 Inferno (100/100). +2 points!",W/2,610);}
+}
+const PW=[["💥 Pocket breaks → QB pressured",65,COL.danger],["🛡️ Pocket holds → QB pressured",18,COL.accent2]];
+function scenePw(t){
+  drawChrome(4);
+  X.fillStyle=COL.text;X.font="bold 20px sans-serif";X.textAlign="left";
+  X.fillText("🛡️ Pocket Watch — will the pocket break, where, and who breaks through?",28,160);
+  X.fillStyle=COL.muted;X.font="13px sans-serif";
+  X.fillText('The "Open Lane" metric: a clean path from a rusher to the QB. Validated without PFF labels.',28,186);
+  PW.forEach((p,i)=>{const y=245+i*90;const full=560*(p[1]/100);const bw=full*Math.min(1,t*1.6);
+    X.fillStyle=COL.text;X.font="15px sans-serif";X.textAlign="left";X.fillText(p[0],28,y+28);
+    X.fillStyle=COL.panel;rr(430,y+6,560,34,8);X.fill();X.fillStyle=p[2];rr(430,y+6,bw,34,8);X.fill();
+    X.fillStyle=COL.text;X.font="bold 16px sans-serif";X.fillText(p[1]+"%",440+full,y+29);});
+  if(t>.6){X.fillStyle=COL.gold;X.font="15px sans-serif";X.textAlign="center";
+    X.fillText("Lane Win Rate leaders: Shaquil Barrett · Demarcus Lawrence · T.J. Watt · Cameron Heyward",W/2,H-95);}
+}
+let viewPlay=makePlay();
+function sceneViewer(t){
+  drawChrome(5);
+  X.fillStyle=COL.text;X.font="bold 20px sans-serif";X.textAlign="left";X.fillText("🎬 Animated Replay — TB ⚔️ DAL",28,158);
+  const gauge=drawFieldArea(viewPlay,Math.min(1,t*1.1),180,350);
+  // live pressure meter
+  const g=Math.round(gauge),my=560;
+  X.fillStyle=COL.muted;X.font="14px sans-serif";X.textAlign="left";X.fillText("🌡️ Pressure on the QB",28,my+20);
+  X.fillStyle=COL.panel2;rr(230,my+6,900,20,10);X.fill();X.strokeStyle=COL.border;X.stroke();
+  X.fillStyle=g>=66?COL.danger:g>=33?COL.warn:COL.accent2;rr(230,my+6,900*g/100,20,10);X.fill();
+  X.fillStyle=COL.text;X.font="bold 18px sans-serif";X.textAlign="left";X.fillText(g,1145,my+23);
+}
+
+// ---- timeline ----
+const SCENES=[
+  [sceneOverview,3200,"Yuki.exe — turn NFL tracking data into fun insight 🏈"],
+  [scenePPI,4200,"🔥 Pressure Meter — elite rushers rise to the top (eye-test approved)"],
+  [sceneProw,4000,"🎯 Throwing Window — a surprising truth about being 'open'"],
+  [sceneGame,4200,"🎮 Guess the Pressure — watch a real play, then call it!"],
+  [scenePw,4000,"🛡️ Pocket Watch — a 3-step guessing mini-game"],
+  [sceneViewer,4600,"🎬 Animated Replay — the pressure gauge rises live 🟡"],
+];
+const TOTAL=SCENES.reduce((s,x)=>s+x[1],0)+1500;
+let running=false;
+async function runDemo(){
+  if(running)return;running=true;gamePlay=makePlay();viewPlay=makePlay();
+  const t0=performance.now();let done=0;
+  for(const [fn,dur,cap] of SCENES){
+    const s=performance.now();
+    while(performance.now()-s<dur){
+      const t=(performance.now()-s)/dur;fn(t);caption(cap);progress((done+(performance.now()-s))/TOTAL);
+      await sleep(33);
+    }
+    done+=dur;
+  }
+  // outro
+  const s=performance.now();
+  while(performance.now()-s<1500){drawChrome(5);
+    X.fillStyle=COL.text;X.font="bold 30px sans-serif";X.textAlign="center";
+    X.fillText("🏈 Yuki.exe",W/2,H/2-20);
+    X.fillStyle=COL.muted;X.font="17px sans-serif";
+    X.fillText("Download it on GitHub Releases — one click. 🎉",W/2,H/2+20);
+    progress(1);await sleep(33);}
+  running=false;
+}
+document.getElementById("play").onclick=()=>runDemo();
+
+// ---- record the canvas directly (no screen-share popup) ----
+document.getElementById("rec").onclick=async()=>{
+  const btn=document.getElementById("rec");const st=document.getElementById("status");
+  if(!C.captureStream){st.textContent="This browser can't capture a canvas. Use ▶ Play preview + a screen recorder.";return;}
+  btn.disabled=true;document.getElementById("play").disabled=true;
+  st.textContent="⏺ Recording… the demo is playing, please wait (~32 s).";
+  const stream=C.captureStream(30);
+  const mime=["video/webm;codecs=vp9","video/webm;codecs=vp8","video/webm"].find(m=>MediaRecorder.isTypeSupported(m))||"video/webm";
+  const rec=new MediaRecorder(stream,{mimeType:mime,videoBitsPerSecond:6000000});
+  const chunks=[];rec.ondataavailable=e=>e.data.size&&chunks.push(e.data);
+  rec.onstop=()=>{const blob=new Blob(chunks,{type:"video/webm"});const url=URL.createObjectURL(blob);
+    const a=document.createElement("a");a.href=url;a.download="yuki-demo.webm";a.click();
+    st.innerHTML='✅ Done! <a class="dl" href="'+url+'" download="yuki-demo.webm">download yuki-demo.webm</a> &nbsp;('+(blob.size/1048576).toFixed(1)+' MB)';
+    btn.disabled=false;document.getElementById("play").disabled=false;};
+  rec.start();
+  await runDemo();
+  await sleep(300);rec.stop();
+};
+// draw a first frame so the canvas isn't blank
+drawChrome(0);caption("Click ⏺ Generate .webm video (or ▶ Play preview)");
+</script>
+</body>
+</html>
